@@ -1,0 +1,179 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0a0a0a;
+  --color-surface: #18181b;
+  --color-text: #fafafa;
+  --color-text-muted: #a1a1aa;
+  --color-accent: #6366f1;
+  --color-accent-hover: #4f46e5;
+  --color-border: #27272a;
+  --color-border-hover: #3f3f46;
+  --color-error: #ef4444;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-info: #3b82f6;
+
+  /* Classificação etária BR */
+  --color-rating-L: #22c55e;
+  --color-rating-10: #3b82f6;
+  --color-rating-12: #06b6d4;
+  --color-rating-14: #f59e0b;
+  --color-rating-16: #f97316;
+  --color-rating-18: #ef4444;
+
+  /* Prestígio */
+  --color-prestige-winner: #fbbf24;
+  --color-prestige-nominee: #9ca3af;
+
+  /* Dark mode variables */
+  --color-bg-dark: #0a0a0a;
+  --color-surface-dark: #18181b;
+  --color-text-dark: #fafafa;
+  --color-text-muted-dark: #a1a1aa;
+  --color-border-dark: #27272a;
+
+  /* Light mode variables */
+  --color-bg-light: #fafafa;
+  --color-surface-light: #ffffff;
+  --color-text-light: #0a0a0a;
+  --color-text-muted-light: #52525b;
+  --color-border-light: #e4e4e7;
+
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+@layer base {
+  :root {
+    --background: var(--color-bg);
+    --foreground: var(--color-text);
+    --surface: var(--color-surface);
+    --border: var(--color-border);
+    --muted: var(--color-text-muted);
+  }
+
+  .light {
+    --background: var(--color-bg-light);
+    --foreground: var(--color-text-light);
+    --surface: var(--color-surface-light);
+    --border: var(--color-border-light);
+    --muted: var(--color-text-muted-light);
+  }
+
+  .dark {
+    --background: var(--color-bg-dark);
+    --foreground: var(--color-text-dark);
+    --surface: var(--color-surface-dark);
+    --border: var(--color-border-dark);
+    --muted: var(--color-text-muted-dark);
+  }
+
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  ::selection {
+    background-color: var(--color-accent);
+    color: white;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .animate-in {
+    animation: animate-in 0.3s ease-out;
+  }
+
+  @keyframes animate-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .glass {
+    background: rgba(24, 24, 27, 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+  }
+
+  .glass-light {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+  }
+
+  .rating-badge {
+    @apply inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold rounded;
+  }
+
+  .rating-L {
+    @apply rating-badge bg-[var(--color-rating-L)] text-white;
+  }
+
+  .rating-10 {
+    @apply rating-badge bg-[var(--color-rating-10)] text-white;
+  }
+
+  .rating-12 {
+    @apply rating-badge bg-[var(--color-rating-12)] text-white;
+  }
+
+  .rating-14 {
+    @apply rating-badge bg-[var(--color-rating-14)] text-white;
+  }
+
+  .rating-16 {
+    @apply rating-badge bg-[var(--color-rating-16)] text-white;
+  }
+
+  .rating-18 {
+    @apply rating-badge bg-[var(--color-rating-18)] text-white;
+  }
+
+  .prestige-winner {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-[var(--color-prestige-winner)] text-zinc-950;
+  }
+
+  .prestige-nominee {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-[var(--color-prestige-nominee)] text-zinc-950;
+  }
+
+  .nsfw-blur {
+    filter: blur(20px);
+    transition: filter 0.3s ease;
+  }
+
+  .nsfw-revealed {
+    filter: none;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}

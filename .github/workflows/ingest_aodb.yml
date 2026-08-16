@@ -1,0 +1,22 @@
+name: Weekly AODB Ingestion
+
+on:
+  schedule:
+    - cron: '0 3 * * 0' # Domingo 3h UTC
+  workflow_dispatch: # Manual
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install @supabase/supabase-js JSONStream
+      - name: Run ingestion
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/ingest-aodb.js

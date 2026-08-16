@@ -1,0 +1,35 @@
+{
+  "schema_version": 2,
+  "active_work_id": "hubble-greenfield-bca10dc8",
+  "works": {
+    "hubble-greenfield-bca10dc8": {
+      "work_id": "hubble-greenfield-bca10dc8",
+      "active_plan": "/home/caue/Documentos/VSCODE/Hubble/.omo/plans/hubble-greenfield.md",
+      "plan_name": "hubble-greenfield",
+      "status": "active",
+      "started_at": "2026-08-13T17:56:33.306Z",
+      "updated_at": "2026-08-13T17:56:33.306Z",
+      "session_ids": [
+        "opencode:ses_003c274e9ffe5sKjScrLFwMT4a"
+      ],
+      "session_origins": {
+        "opencode:ses_003c274e9ffe5sKjScrLFwMT4a": "direct"
+      },
+      "agent": "atlas",
+      "task_sessions": {}
+    }
+  },
+  "active_plan": "/home/caue/Documentos/VSCODE/Hubble/.omo/plans/hubble-greenfield.md",
+  "started_at": "2026-08-13T17:56:33.306Z",
+  "status": "active",
+  "updated_at": "2026-08-13T17:56:33.306Z",
+  "session_ids": [
+    "opencode:ses_003c274e9ffe5sKjScrLFwMT4a"
+  ],
+  "session_origins": {
+    "opencode:ses_003c274e9ffe5sKjScrLFwMT4a": "direct"
+  },
+  "plan_name": "hubble-greenfield",
+  "task_sessions": {},
+  "agent": "atlas"
+}
