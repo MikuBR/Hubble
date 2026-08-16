@@ -12,10 +12,12 @@
 const fs = require('fs');
 const https = require('https');
 const { createClient } = require('@supabase/supabase-js');
-const JSONStream = require('JSONStream'); // Assumindo que foi instalado ou usaremos alternativo
+const JSONStream = require('JSONStream');
+const { URL } = require('url');
+require('dotenv').config({ path: '.env.local' }); // Carrega .env.local
 
 // Config
-const AODB_URL = 'https://github.com/manami-project/anime-offline-database/releases/latest/download/anime-offline-database-minified.json';
+const AODB_URL = 'https://github.com/manami-project/anime-offline-database/releases/download/2026-27/anime-offline-database-minified.json';
 const BATCH_SIZE = 1000;
 
 const supabase = createClient(
@@ -23,21 +25,79 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY // Requer service_role para bypass RLS
 );
 
+function makeRequest(url) {
+  return new Promise((resolve, reject) => {
+    const parsed = new URL(url);
+    const options = {
+      hostname: parsed.hostname,
+      path: parsed.pathname + parsed.search,
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Node.js',
+        'Accept': 'application/json'
+      }
+    };
+
+    const req = https.request(options, (res) => {
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        // Redirect
+        const redirectUrl = res.headers.location;
+        console.log('[DEBUG] Redirect to:', redirectUrl);
+        makeRequest(redirectUrl).then(resolve).catch(reject);
+        return;
+      }
+      resolve(res);
+    });
+
+    req.on('error', reject);
+    req.end();
+  });
+}
+
 async function ingest() {
   console.log('🚀 Iniciando ingestão AODB...');
 
   const logId = await startLog();
 
-  https.get(AODB_URL, (res) => {
+  try {
+    const res = await makeRequest(AODB_URL);
+    console.log('[DEBUG] Response status:', res.statusCode);
+    console.log('[DEBUG] Content-Type:', res.headers['content-type']);
+    console.log('[DEBUG] Content-Encoding:', res.headers['content-encoding']);
+    
+    // Check if response is gzipped
+    const isGzipped = res.headers['content-encoding'] === 'gzip';
+    let stream = res;
+    if (isGzipped) {
+      const zlib = require('zlib');
+      stream = res.pipe(zlib.createGunzip());
+    }
+    
     const parser = JSONStream.parse('data.*');
     let batch = [];
     let processed = 0;
     let inserted = 0;
 
-    res.pipe(parser);
+    stream.pipe(parser);
+    
+    // Debug: check if data is flowing (only first few)
+    let debugCount = 0;
+    stream.on('data', (chunk) => {
+      if (debugCount < 3) {
+        console.log('[DEBUG] Stream data chunk length:', chunk.length);
+        debugCount++;
+      }
+    });
+    
+    stream.on('end', () => {
+      console.log('[DEBUG] Stream ended');
+    });
 
     parser.on('data', async (anime) => {
       processed++;
+      if (processed % 5000 === 0) {
+        console.log(`[DEBUG] Processed ${processed}: ${anime.title}`);
+      }
 
       // Extrair IDs via Regex
       const mappings = extractMappings(anime.sources);
@@ -63,6 +123,7 @@ async function ingest() {
     });
 
     parser.on('end', async () => {
+      console.log('[DEBUG] Parser ended. Total processed:', processed, 'Batch remaining:', batch.length);
       if (batch.length > 0) {
         inserted += await flush(batch);
       }
@@ -71,13 +132,15 @@ async function ingest() {
     });
 
     parser.on('error', async (err) => {
+      console.error('[DEBUG] Parser error:', err);
       await endLog(logId, 'failed', processed, inserted, err.message);
       console.error('❌ Erro no parser:', err);
     });
 
-  }).on('error', (err) => {
+  } catch (err) {
+    console.error('[DEBUG] Download error:', err);
     console.error('❌ Erro no download:', err);
-  });
+  }
 }
 
 function extractMappings(sources) {
@@ -97,15 +160,22 @@ function extractMappings(sources) {
 }
 
 async function flush(data) {
+  // Deduplicar por aodb_title (manter o último)
+  const seen = new Map();
+  for (const item of data) {
+    seen.set(item.aodb_title, item);
+  }
+  const uniqueData = Array.from(seen.values());
+  
   const { error } = await supabase
     .from('offline_anime_mapping')
-    .upsert(data, { onConflict: 'aodb_title' });
+    .upsert(uniqueData, { onConflict: 'aodb_title' });
 
   if (error) {
     console.error('❌ Erro no upsert:', error.message);
     return 0;
   }
-  return data.length;
+  return uniqueData.length;
 }
 
 async function startLog() {

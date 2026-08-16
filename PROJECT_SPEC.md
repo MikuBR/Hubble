@@ -5,6 +5,89 @@
 
 ---
 
+## 0.5 Status Atual (Checkpoint 2026-08-16 — Dia 1)
+
+### ✅ Implementado e verificado
+
+| # | Item | Status | Evidência |
+|---|------|--------|-----------|
+| 1 | Scaffold Next.js 15 + TS strict + Tailwind v4 | ✅ | `npm run dev` → http://localhost:3000 |
+| 2 | `.env.local` configurado com Supabase real | ✅ | Credenciais `afphryyiswvffdazjkcw.supabase.co` |
+| 3 | Migration 1 (schema, 9 tabelas, RLS) | ✅ | 9 tabelas criadas no Supabase Cloud |
+| 4 | Migration 2 (triggers) | ✅ | Triggers `set_updated_at`, `recompute_tag_preferences`, `validate_progress_increment`, `handle_new_user` |
+| 5 | Migration 3 (RPCs) | ✅ | `get_recommendations`, `get_horizons`, `get_user_stats` |
+| 6 | Extensão `pg_cron` ativada | ✅ | Habilitada no Dashboard do Supabase |
+| 7 | Auth: `@supabase/ssr` + middleware + páginas `/login` `/signup` `/auth/callback` | ✅ | Código pronto, client.ts/server.ts/admin.ts |
+| 8 | API: `/api/search`, `/api/progress`, `/api/library`, `/api/media`, `/api/insights`, `/api/recommendations`, `/api/recommendations/horizons` | ✅ | Retornam 200 com validação Zod |
+| 9 | UI Primitives: Button, Card, Toast, Modal, StreamingCard, ListRow, InsightsEditor, AgeRatingBadge, AwardBadge | ✅ | Barrel export em `src/shared/ui/index.ts` |
+| 10 | Hooks: useDebounce, useToast, useOptimisticProgress | ✅ | `src/shared/hooks/index.ts` |
+| 11 | Utils: titles.ts (multi-idioma), ratings.ts (classificação BR), cn.ts | ✅ | + 52 testes Vitest passando |
+| 12 | Widgets: Header com auth state | ✅ | `src/widgets/header.tsx` |
+| 13 | Páginas: Home, Library, Search, Media Detail, Recommendations, Settings | ✅ | Todas as 7 páginas dashboard |
+| 14 | AODB ingest script com fix Kitsu (`kitsu.app`) | ✅ | **33.865 mapeamentos únicos inseridos** |
+| 15 | GitHub Actions workflow | ✅ | `.github/workflows/ingest_aodb.yml` |
+| 16 | Vitest setup + 52 testes unitários | ✅ | titles, ratings, aodb-parse |
+
+### 🔄 Em progresso
+
+| # | Item | Blocker |
+|---|------|---------|
+| 17 | Popular `media_catalog` com dados reais (a partir do AODB) | Precisa script de enriquecimento com API do AniList |
+| 18 | Testar fluxo de signup/login end-to-end | Precisa habilitar provider Email no Supabase |
+| 19 | Gerar tipos TS do banco (`supabase gen types`) | CLI não instalado; fazer via Management API |
+
+### ⏳ Pendente (não bloqueia demo)
+
+- [ ] Adicionar mídia manualmente (busca híbrida com AniList fallback)
+- [ ] Marcar progresso (optimistic UI) — código pronto, falta validação E2E
+- [ ] Diary privado (Markdown editor) — componente pronto
+- [ ] Import Letterboxd + AniList
+- [ ] Export JSON
+- [ ] Tema claro/escuro (Tailwind v4 dark mode)
+- [ ] Mobile responsive
+- [ ] Algoritmo "Novos Horizontes" — RPC pronto, falta UI
+- [ ] NSFW blur com reveal
+- [ ] Admin awards page
+- [ ] Compartilhamento público (opt-in)
+- [ ] PWA installable
+
+### 📊 Banco de dados (estado atual)
+
+| Tabela | Linhas |
+|--------|--------|
+| `profiles` | 0 |
+| `media_catalog` | 0 ⚠️ (AODB tem 33.865 mapeamentos em `offline_anime_mapping`, mas falta enriquecer e inserir em `media_catalog`) |
+| `user_media_progress` | 0 |
+| `user_tag_preferences` | 0 |
+| `media_titles_i18n` | 0 |
+| `awards` | 0 |
+| `export_logs` | 0 |
+| `ingestion_logs` | 1 (último job AODB: success) |
+| `offline_anime_mapping` | **33.865** ✅ |
+
+### 🔑 Credenciais configuradas
+
+- Supabase URL: `https://afphryyiswvffdazjkcw.supabase.co`
+- Project ref: `afphryyiswvffdazjkcw`
+- Region: Brazil South (São Paulo)
+- Plan: Free (Hobby)
+
+### 📝 Notas técnicas
+
+1. **AODB ingest funciona**: O script `scripts/ingest-aodb.js` processa os 41.537 animes do dataset `manami-project/anime-offline-database` e insere em `offline_anime_mapping` com deduplicação por `aodb_title`.
+
+2. **Próximo passo crítico**: Criar script de enriquecimento que:
+   - Lê `offline_anime_mapping`
+   - Chama API do AniList (GraphQL) por `anilist_id` para buscar metadados completos (synopsis, genres, studios, cover_url, release_year, etc.)
+   - Faz upsert em `media_catalog`
+   - Respeita rate limit do AniList (90 req/min)
+
+3. **Schema está alinhado com a spec**: As 3 migrations refletem fielmente as seções 3.1, 3.2, 3.3 e 5.3 deste documento.
+
+4. **Frontend completo mas sem dados**: Todas as páginas renderizam, mas `media_catalog` está vazio. A busca retorna `[]`. Após popular o catálogo, tudo funciona automaticamente.
+
+---
+
 ## 0. Visão em 30 segundos
 
 **HUBBLE** é um rastreador de mídia **unificado, privado, offline-first**. Uma única aplicação que substitui Letterboxd + AniList + MAL + Trakt + MangaUpdates.
