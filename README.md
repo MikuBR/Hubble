@@ -22,7 +22,10 @@
     <img src="https://img.shields.io/badge/Next.js_15-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js" />
     <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS" />
     <img src="https://img.shields.io/badge/Supabase_PostgreSQL-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" />
+    <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
     <img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="License MIT" />
+    <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge" alt="PRs Welcome" />
+    <img src="https://img.shields.io/badge/Phase_1-Complete-success?style=for-the-badge" alt="Phase 1 Complete" />
   </p>
 
   <br />
@@ -132,33 +135,82 @@ Para evitar o colapso por *Rate Limit* (Erro 429) e manter buscas em milissegund
 
 ## 🚀 Roadmap do Projeto
 
-### Phase 1 — Fundações (✅ Concluída)
-- [x] Arquitetura base: Next.js + Supabase + PostgreSQL
-- [x] Schema de dados: 9 tabelas com RLS
-- [x] Auth seguro (Email + OAuth ready)
-- [x] Tipos TypeScript gerados do banco
+### Phase 1 — Fundações (✅ **100% Concluída** — *Backend Core Ready*)
+- [x] Arquitetura base: Next.js 15 + Supabase + PostgreSQL
+- [x] Schema de dados: 9 tabelas com RLS completo
+- [x] Auth seguro (Email Provider + OAuth ready)
+- [x] Tipos TypeScript gerados do banco (`src/lib/database.types.ts`)
 - [x] Enriquecimento automático via AniList GraphQL (1.000 animes)
+- [x] 3 RPCs funcionais: `get_recommendations`, `get_horizons`, `get_user_stats`
+- [x] 4 Triggers ativos: affinity, hiatus validation, updated_at, auto-profile
+- [x] Testes E2E automatizados (signup → progress → RPCs)
+- [x] Documentação técnica completa + Troubleshooting
 
-### Phase 2 — Funcionalidades Core (🚧 Em Progresso)
-- [ ] Modo Streaming (cinema) com tema escuro imersivo
-- [ ] Modo Lista Premium (leitura) com tabela compacta
-- [ ] UI para Insights Privados (Markdown editor)
-- [ ] Algoritmo de gostos silencioso (matriz de afinidade por tags)
-- [ ] Aba "Novos Horizontes" (anti-bolha) - **RPC pronto, falta UI**
-- [ ] Filtro NSFW & desativação modular
-- [ ] Upload de capítulos otimista (Δ)
+---
 
-### Phase 3 — Infraestrutura
-- [ ] GitHub Actions para ingestão semanal do Anime Offline Database
-- [ ] Supabase Edge Functions para back-end leves
-- [ ] Vercel com camada gratuita + pipeline de deploy
-- [ ] Analytics de uso (privacy-preserving)
+### Phase 2 — Interface & Experiência do Usuário (🎯 **PRÓXIMA — Início Imediato**)
 
-### Phase 4 — Expansão
-- [ ] API pública para desenvolvedores
-- [ ] Exportação de dados (JSON/CSV)
-- [ ] Comunidade (fóruns, comentários, favoritos)
-- [ ] Multiplataforma (PWA, mobile)
+| Sprint | Feature | Descrição Técnica | Estimativa | Status |
+|--------|---------|-------------------|------------|--------|
+| **2.1** | **Modo Streaming (Cinema)** | Tema escuro imersivo, backdrops full-bleed, carrosséis horizontais, player trailer embed, classificação etária BR badges | 2-3 semanas | 🔲 Planejado |
+| **2.2** | **Modo Lista Premium (Leitura)** | Tabela virtualizada (TanStack Table), colunas: capa, título, progresso (cap/vol), status, score, ações; incremento otimista `+1 cap` | 2 semanas | 🔲 Planejado |
+| **2.3** | **Busca Unificada & Filtros** | Combobox com debounce, busca trigram (pg_trgm), filtros: tipo, status, gênero, ano, score, tags | 1 semana | 🔲 Planejado |
+| **2.4** | **Editor de Insights (Markdown)** | TipTap/ProseMirror com sanitização (rehype-sanitize), spoilers toggle, preview live, auto-save | 1 semana | 🔲 Planejado |
+| **2.5** | **Aba "Novos Horizontes" (UI)** | Consome `get_horizons` RPC, cards de descoberta, explainability ("por que isso?"), feedback loop | 1 semana | 🔲 Planejado |
+| **2.6** | **Sistema de Gosto (UI)** | Dashboard de afinidade: tags positivas/negativas, radar chart, exportação de gosto | 3-4 dias | 🔲 Planejado |
+| **2.7** | **Filtro NSFW & Módulos** | Toggle global + por tipo de mídia, hidratação condicional de rotas/componentes | 2-3 dias | 🔲 Planejado |
+| **2.8** | **Perfil & Configurações** | Avatar upload (Supabase Storage), temas, idiomas, privacidade, exportação de dados | 1 semana | 🔲 Planejado |
+
+---
+
+### Phase 3 — Infraestrutura & Automação (📅 **Pós-Phase 2**)
+
+| Item | Descrição | Estimativa |
+|------|-----------|------------|
+| **GitHub Actions Cron** | Workflow semanal: download AODB → enrich AniList → upsert `media_catalog` → log | 2 dias |
+| **Supabase Edge Functions** | Migrar lógica server-only (enriquecimento, jobs pesados) para Edge (Deno) | 3 dias |
+| **Vercel Pipeline** | Preview deploys automáticos, `vercel.json` com headers/cache, env sync | 1 dia |
+| **Observabilidade** | Logs estruturados (Pino), métricas customizadas (Vercel Analytics + Supabase Logs) | 2 dias |
+| **Backup & Recovery** | Point-in-time recovery testado, export automático semanal para R2/S3 | 1 dia |
+
+---
+
+### Phase 4 — Expansão & Ecossistema (🔮 **Visão de Longo Prazo**)
+
+- [ ] **API Pública v1** — REST + GraphQL para desenvolvedores (rate limited, OAuth2)
+- [ ] **Exportação de Dados** — JSON/CSV/Markdown completo (LGPD/GDPR ready)
+- [ ] **Comunidade Opcional** — Fóruns por obra, comentários, listas públicas (opt-in)
+- [ ] **Multiplataforma** — PWA (service worker, offline-first), Capacitor para iOS/Android
+- [ ] **Integrações** — Trakt.tv sync, AniList/MAL import/export, Discord Rich Presence
+- [ ] **AI Features** — Resumos auto de insights, recomendações LLM-based, OCR para caps físicos
+
+---
+
+### 📊 Progresso Visual Atual
+
+```
+Phase 1 ████████████████████ 100% ✅
+Phase 2 ░░░░░░░░░░░░░░░░░░░░   0%  🎯 NEXT
+Phase 3 ░░░░░░░░░░░░░░░░░░░░   0%
+Phase 4 ░░░░░░░░░░░░░░░░░░░░   0%
+```
+
+---
+
+### 🎯 Próxima Ação Imediata (Sprint 2.1)
+
+```bash
+# 1. Criar branch da feature
+git checkout -b feat/streaming-mode
+
+# 2. Scaffold das páginas (App Router)
+mkdir -p src/app/\(dashboard\)/streaming
+mkdir -p src/components/streaming
+
+# 3. Componentes base: MediaCarousel, BackdropHero, RatingBadges
+# 4. Integração com RPC get_recommendations + get_horizons
+# 5. Tailwind config: cinema theme (--bg: #0a0a0f, --card: #14141f, --accent: #e50914)
+```
 
 ---
 
