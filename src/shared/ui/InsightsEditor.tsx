@@ -171,7 +171,7 @@ export function InsightsEditor({
 
       {/* Help text */}
       <p className="text-xs text-zinc-500 text-center">
-        Markdown suportado: **negrito**, *itálico*, `código`, > citação, - lista, ||spoiler||
+        Markdown suportado: **negrito**, *itálico*, `código`, {' > '} citação, - lista, ||spoiler||
       </p>
     </div>
   );

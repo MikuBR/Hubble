@@ -83,13 +83,13 @@ CREATE TRIGGER recompute_tag_preferences
 CREATE OR REPLACE FUNCTION validate_progress_increment()
 RETURNS TRIGGER AS $$
 DECLARE
-    release_status release_status_enum;
+    v_release_status release_status_enum;
 BEGIN
-    SELECT release_status INTO release_status
-    FROM media_catalog
-    WHERE id = NEW.media_id;
+    SELECT mc.release_status INTO v_release_status
+    FROM media_catalog mc
+    WHERE mc.id = NEW.media_id;
 
-    IF release_status = 'hiatus' AND NEW.current_unit > OLD.current_unit THEN
+    IF v_release_status = 'hiatus' AND NEW.current_unit > OLD.current_unit THEN
         RAISE EXCEPTION 'Cannot increment progress on hiatus media';
     END IF;
 
