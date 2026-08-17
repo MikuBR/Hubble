@@ -145,7 +145,7 @@ O Hubble utiliza um **sistema híbrido em evolução** baseado em **Content-Base
 ```mermaid
 graph LR
     A[User completa obra score 8+] --> B[Trigger recompute_tag_preferences]
-    B --> C[user_tag_preferences genre +10 theme +5 studio +3]
+    B --> C[user_tag_preferences genre plus10 theme plus5 studio plus3]
     C --> D[get_recommendations genre in positive score 7.5+]
     C --> E[get_horizons genre not in user_genres score 8+]
 ```
