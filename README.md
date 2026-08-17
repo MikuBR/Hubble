@@ -144,18 +144,11 @@ O Hubble utiliza um **sistema híbrido em evolução** baseado em **Content-Base
 #### Arquitetura Implementada
 ```mermaid
 flowchart LR
-    A[User completa obra score 8+] --> B[Trigger recompute_tag_preferences]
-    B --> C[user_tag_preferences updated]
+    A[User completa obra] --> B[Trigger recompute_tag_preferences]
+    B --> C[user_tag_preferences]
     C --> D[get_recommendations]
     C --> E[get_horizons]
 ```
-
-**Fluxo detalhado:**
-1. **User completa obra** com score ≥ 8.0
-2. **Trigger** `recompute_tag_preferences` dispara
-3. **user_tag_preferences** atualizado: genre +10, theme +5, studio +3
-4. **get_recommendations**: busca obras com genre em positive_genres e score > 7.5
-5. **get_horizons**: busca obras com genre NOT IN user_genres e score > 8.0
 
 #### Tabela: `user_tag_preferences` (Matriz de Afinidade)
 | Coluna | Tipo | Descrição |
