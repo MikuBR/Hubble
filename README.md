@@ -146,8 +146,8 @@ O Hubble utiliza um **sistema híbrido em evolução** baseado em **Content-Base
 graph LR
     A[User completa obra score 8+] --> B[Trigger recompute_tag_preferences]
     B --> C[user_tag_preferences genre +10 theme +5 studio +3]
-    C --> D[get_recommendations genre IN positive score > 7.5]
-    C --> E[get_horizons genre NOT IN user_genres score > 8.0]
+    C --> D[get_recommendations genre in positive score 7.5+]
+    C --> E[get_horizons genre not in user_genres score 8+]
 ```
 
 #### Tabela: `user_tag_preferences` (Matriz de Afinidade)
