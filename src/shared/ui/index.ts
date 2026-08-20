@@ -10,3 +10,6 @@ export { AwardBadge, AwardBadgeLarge } from "./AwardBadge";
 export { StreamingCard, StreamingGrid } from "./StreamingCard";
 export { ListRow, ReadingTable } from "./ListRow";
 export { InsightsEditor } from "./InsightsEditor";
+
+// Cinema mode components
+export { Carousel, CarouselCompact } from "./Carousel";

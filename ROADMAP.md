@@ -24,9 +24,11 @@
 
 ---
 
-## 🗺️ Plano Incremental Numerado
+### 🗺️ Plano Incremental Numerado
 
 Prioridade: backend/UX first. Protagonista = feature core. Desfechos = polish.
+
+Status: ⚠️ Items #2 e #4 (parte desta sessão) já aplicados. Veja `PROGRESS.md` sessão 3.
 
 ### Parte 1 — Foundation Gaps (fechar o que está 85% aberto)
 
@@ -36,10 +38,10 @@ Prioridade: backend/UX first. Protagonista = feature core. Desfechos = polish.
 - Valida fluxo: signup → email confirmation → login → profile criado
 - Estimativa: 30min
 
-**#2 Aplicar migration `20260819000001` no Supabase remoto**
-- Migration já existe localmente e foi commitada
-- Rodar via SQL Editor ou Management API
-- Estimativa: 5min
+**#2 Aplicar migration `20260819000001` no Supabase remoto** ✅
+- Migration aplicada via MCP Supabase SSE (session: 3)
+- Resultado: `{"status":"handle_new_user atualizado com sucesso!"}`
+- Estimativa: 5min → 2min (via MCP)
 
 **#3 Popular `media_catalog` com dados reais do AODB + AniList**
 - Rodar `pnpm enrich:anilist` para inserir ~1k animes enriquecidos
@@ -133,4 +135,4 @@ git checkout -b feat/streaming-mode
 
 ---
 
-> Última atualização: 2026-08-20. Repositório sincronizado com `main`.
+> Última atualização: 2026-08-20. Repositório sincronizado com `main`. Bugs críticos resolvidos na sessão 3.
