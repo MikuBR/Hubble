@@ -248,313 +248,55 @@ flowchart LR
 
 ## 🚀 Roadmap do Projeto
 
+> **Roadmap detalhado:** [`ROADMAP.md`](./ROADMAP.md) — plano incremental numerado, baseado em estado real do código.
+
 ### Phase 1 — Fundações (✅ **100% Concluída** — *Backend Core Ready*)
 - [x] Arquitetura base: Next.js 15 + Supabase + PostgreSQL
 - [x] Schema de dados: 9 tabelas com RLS completo
 - [x] Auth seguro (Email Provider + OAuth ready)
-- [x] Tipos TypeScript gerados do banco (`src/lib/database.types.ts`)
-- [x] Enriquecimento automático via AniList GraphQL (1.000 animes)
+- [x] Tipos TypeScript geridos em `src/lib/database.types.ts`
+- [x] Enriquecimento automático via AniList GraphQL
 - [x] 3 RPCs funcionais: `get_recommendations`, `get_horizons`, `get_user_stats`
-- [x] 4 Triggers ativos: affinity, hiatus validation, updated_at, auto-profile
-- [x] Testes E2E automatizados (signup → progress → RPCs)
-- [x] Documentação técnica completa + Troubleshooting
+- [x] 4 Triggers ativos
+- [x] Testes unitários (Vitest) + scripts E2E
 
----
+### Phase 2 — Interface & Experiência (🎯 **PRÓXIMA**)
+- [ ] Modo Cinema imersivo (backdrop, carrosséis, trailer embed)
+- [ ] Modo Lista Premium (tabela virtualizada, `+1 cap` otimista)
+- [ ] Busca Unificada com pg_trgm + filtros
+- [ ] Editor de Insights funcional (preview, auto-save)
+- [ ] Perfil & Configurações (avatar upload, temas)
 
-### Phase 2 — Interface & Experiência do Usuário (🎯 **PRÓXIMA — Início Imediato**)
+### Phase 3 — Infraestrutura & Automação
+- [ ] pg_cron + Edge Function para ingest semanal
+- [ ] Testes E2E com Playwright
+- [ ] Observabilidade + Backup automático
 
-| Sprint | Feature | Descrição Técnica | Estimativa | Status |
-|--------|---------|-------------------|------------|--------|
-| **2.1** | **Modo Streaming (Cinema)** | Tema escuro imersivo, backdrops full-bleed, carrosséis horizontais, player trailer embed, classificação etária BR badges | 2-3 semanas | 🔲 Planejado |
-| **2.2** | **Modo Lista Premium (Leitura)** | Tabela virtualizada (TanStack Table), colunas: capa, título, progresso (cap/vol), status, score, ações; incremento otimista `+1 cap` | 2 semanas | 🔲 Planejado |
-| **2.3** | **Busca Unificada & Filtros** | Combobox com debounce, busca trigram (pg_trgm), filtros: tipo, status, gênero, ano, score, tags | 1 semana | 🔲 Planejado |
-| **2.4** | **Editor de Insights (Markdown)** | TipTap/ProseMirror com sanitização (rehype-sanitize), spoilers toggle, preview live, auto-save | 1 semana | 🔲 Planejado |
-| **2.5** | **Aba "Novos Horizontes" (UI)** | Consome `get_horizons` RPC, cards de descoberta, explainability ("por que isso?"), feedback loop | 1 semana | 🔲 Planejado |
-| **2.6** | **Sistema de Gosto (UI)** | Dashboard de afinidade: tags positivas/negativas, radar chart, exportação de gosto | 3-4 dias | 🔲 Planejado |
-| **2.7** | **Filtro NSFW & Módulos** | Toggle global + por tipo de mídia, hidratação condicional de rotas/componentes | 2-3 dias | 🔲 Planejado |
-| **2.8** | **Perfil & Configurações** | Avatar upload (Supabase Storage), temas, idiomas, privacidade, exportação de dados | 1 semana | 🔲 Planejado |
-
----
-
-### Phase 3 — Infraestrutura & Automação (📅 **Pós-Phase 2**)
-
-| Item | Descrição | Estimativa |
-|------|-----------|------------|
-| **GitHub Actions Cron** | Workflow semanal: download AODB → enrich AniList → upsert `media_catalog` → log | 2 dias |
-| **Supabase Edge Functions** | Migrar lógica server-only (enriquecimento, jobs pesados) para Edge (Deno) | 3 dias |
-| **Vercel Pipeline** | Preview deploys automáticos, `vercel.json` com headers/cache, env sync | 1 dia |
-| **Observabilidade** | Logs estruturados (Pino), métricas customizadas (Vercel Analytics + Supabase Logs) | 2 dias |
-| **Backup & Recovery** | Point-in-time recovery testado, export automático semanal para R2/S3 | 1 dia |
-
----
-
-### Phase 4 — Expansão & Ecossistema (🔮 **Visão de Longo Prazo**)
-
-- [ ] **API Pública v1** — REST + GraphQL para desenvolvedores (rate limited, OAuth2)
-- [ ] **Exportação de Dados** — JSON/CSV/Markdown completo (LGPD/GDPR ready)
-- [ ] **Comunidade Opcional** — Fóruns por obra, comentários, listas públicas (opt-in)
-- [ ] **Multiplataforma** — PWA (service worker, offline-first), Capacitor para iOS/Android
-- [ ] **Integrações** — Trakt.tv sync, AniList/MAL import/export, Discord Rich Presence
-- [ ] **AI Features** — Resumos auto de insights, recomendações LLM-based, OCR para caps físicos
-
----
-
-### 📊 Progresso Visual Atual
+### Phase 4 — Expansão
+- [ ] Import Letterboxd/AniList + Export JSON
+- [ ] PWA installable
+- [ ] Multi-idioma (i18n)
+- [ ] Integrações externas (Trakt, Discord)
+- [ ] AI Features
 
 ```
 Phase 1 ████████████████████ 100% ✅
-Phase 2 ░░░░░░░░░░░░░░░░░░░░   0%  🎯 NEXT
+Phase 2 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ 35%  🎯 NEXT
 Phase 3 ░░░░░░░░░░░░░░░░░░░░   0%
 Phase 4 ░░░░░░░░░░░░░░░░░░░░   0%
 ```
 
----
-
-### 🎯 Próxima Ação Imediata (Sprint 2.1)
+### 🎯 Próxima Ação Imediata
 
 ```bash
-# 1. Criar branch da feature
-git checkout -b feat/streaming-mode
+# 1. Aplicar migration pendente no Supabase SQL Editor
+# supabase/migrations/20260819000001_fix_handle_new_user_username.sql
 
-# 2. Scaffold das páginas (App Router)
-mkdir -p src/app/\(dashboard\)/streaming
-mkdir -p src/components/streaming
+# 2. Habilitar Email provider no Supabase Dashboard
 
-# 3. Componentes base: MediaCarousel, BackdropHero, RatingBadges
-# 4. Integração com RPC get_recommendations + get_horizons
-# 5. Tailwind config: cinema theme (--bg: #0a0a0f, --card: #14141f, --accent: #e50914)
-```
-
----
-
-## 🛠️ Como Executar
-
-### Pré-requisitos
-- **Node.js ≥ 18.17**
-- **pnpm** (recomendado) ou npm/yarn
-- **Conta no Supabase** (gratuita) ou PostgreSQL local via Docker
-
-### Instalação
-
-```bash
-# Clone e entre no projeto
-git clone <url-do-repositorio>
-cd Hubble
-
-# Instale as dependências (pnpm é mais rápido e usa menos disco)
-pnpm install
-# ou: npm install
-
-# Configure as variáveis de ambiente
-cp .env.example .env.local
-# Edite .env.local com suas credenciais (veja seção abaixo)
-
-# Rode o desenvolvimento
-pnpm dev
-# ou: npm run dev
-```
-
-### Variáveis de Ambiente (`.env.local`)
-
-| Variável | Obrigatória | Descrição |
-|----------|-------------|-----------|
-| `NEXT_PUBLIC_SUPABASE_URL` | ✅ | URL do projeto Supabase (ex: `https://xxx.supabase.co`) |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | Chave anônima pública (client-side) |
-| `SUPABASE_SERVICE_ROLE_KEY` | ✅ | Chave de serviço (server-side, **nunca expor no client**) |
-| `NEXT_PUBLIC_APP_URL` | ✅ | URL da aplicação (ex: `http://localhost:3000`) |
-| `ANILIST_CLIENT_ID` | ⚠️ | Para enriquecimento via AniList GraphQL |
-| `ANILIST_CLIENT_SECRET` | ⚠️ | Para enriquecimento via AniList GraphQL |
-
-> **⚠️ IMPORTANTE:** Nunca commite `.env.local`. Use `.env.example` como template.
-
-### Configuração do Supabase (Passo a Passo)
-
-1. **Crie o projeto** em [supabase.com](https://supabase.com) (região: São Paulo recomendada)
-2. **Ative a extensão `pg_cron`** no Dashboard → Database → Extensions
-3. **Execute as migrations** na ordem (SQL Editor):
-   - `supabase/migrations/20260816000001_init_schema.sql`
-   - `supabase/migrations/20260816000002_triggers.sql`
-   - `supabase/migrations/20260816000003_rpc_functions.sql`
-   - `supabase/migrations/20260816000004_fix_signup_and_test_user.sql`
-   - `supabase/migrations/20260816000005_fix_validate_progress.sql`
-   - `supabase/migrations/20260816000006_fix_get_user_stats_v3.sql`
-4. **Authentication → Providers → Email**: Habilite "Enable Email Provider"
-5. **Authentication → URL Configuration**: Adicione `http://localhost:3000/auth/callback` em Redirect URLs
-6. **Copie as chaves** (Project Settings → API) para `.env.local`
-
-### Scripts Disponíveis
-
-```bash
-# Desenvolvimento
-pnpm dev                    # Next.js dev server (Turbopack)
-
-# Build & Produção
-pnpm build                  # Build de produção
-pnpm start                  # Servidor de produção
-
-# Qualidade de Código
-pnpm lint                   # ESLint
-pnpm type-check             # TypeScript (tsc --noEmit)
-pnpm format                 # Prettier
-
-# Banco de Dados / Enriquecimento
-pnpm enrich:anilist         # Enriquece media_catalog via AniList GraphQL (~30 min)
-pnpm test:e2e               # Testa fluxo completo (signup → progress → RPCs)
-
-# Deploy
-pnpm deploy:vercel          # Deploy preview no Vercel
-pnpm deploy:prod            # Deploy produção no Vercel
-```
-
----
-
-## 🧪 Testes & Verificação
-
-### Teste E2E do Fluxo Completo
-
-```bash
-pnpm test:e2e
-```
-
-**O que valida:**
-1. ✅ Catálogo populado (1.000 animes com genres/themes/studios)
-2. ✅ Signup via email cria usuário + profile automaticamente
-3. ✅ Adicionar obra à biblioteca (`user_media_progress`)
-4. ✅ Atualizar progresso (watching → completed, score 9.0)
-5. ✅ Trigger `user_tag_preferences` dispara (+10/gênero)
-6. ✅ RPC `get_user_stats` retorna estatísticas + top_genres
-7. ✅ RPC `get_recommendations` retorna recomendações por afinidade
-8. ✅ RPC `get_horizons` retorna "Novos Horizontes" (anti-bolha)
-
-### Enriquecimento Manual (AniList)
-
-```bash
+# 3. Popular catálogo com dados reais
 pnpm enrich:anilist
+
+# 4. Iniciar implementação do Modo Cinema
+git checkout -b feat/streaming-mode
 ```
-
-- Processa **1.000 mapeamentos** do `offline_anime_mapping`
-- Rate limit conservador: **60 req/min** (1 concorrente)
-- Logs salvos em `ingestion_logs` (source: `anilist_enrichment`)
-- Atualiza: `genres`, `themes`, `studios`, `user_score_global`, `synopsis`, `cover_url`
-
----
-
-## 🛡️ Troubleshooting — Erros Comuns
-
-### 1. **Signup falha: "Database error creating new user"**
-**Causa:** Trigger `handle_new_user` com erro (ex: username null, FK violation).
-**Solução:**
-- Verifique se a migration `20260816000004_fix_signup_and_test_user.sql` foi aplicada
-- O trigger usa `SECURITY DEFINER` e fallback: `COALESCE(username, split_part(email, '@', 1))`
-- Se persistir, insira usuário manual em `auth.users` + profile
-
-### 2. **RPC `get_user_stats`: "column reference is ambiguous"**
-**Causa:** Colunas `created_at`, `status`, `user_score` existem em múltiplas tabelas no JOIN.
-**Solução:** Migration `20260816000006_fix_get_user_stats_v3.sql` prefixa tudo com alias (`u.`, `mc.`).
-
-### 3. **Trigger `validate_progress_increment`: "column reference release_status is ambiguous"**
-**Causa:** Ambas tabelas têm colunas com nomes similares.
-**Solução:** Migration `20260816000005_fix_validate_progress.sql` usa alias `mc.release_status`.
-
-### 4. **Enriquecimento AniList: "RATE_LIMIT" (HTTP 429)**
-**Causa:** Excedeu 90 req/min do AniList.
-**Solução:** Script já usa 60 req/min + 1 concorrente + backoff exponencial. Se persistir, aumente `REQUEST_DELAY_MS` em `scripts/enrich-from-anilist.js`.
-
-### 5. **Tag preferences não geradas (array vazio)**
-**Causa:** Obra no `media_catalog` sem `genres` populados.
-**Solução:** Rode `pnpm enrich:anilist` para popular genres/themes/studios. O trigger só processa gêneros existentes.
-
-### 6. **TypeScript: "Cannot find module '@/lib/database.types'"**
-**Causa:** Path alias `@/*` não resolvido ou arquivo não existe.
-**Solução:** Verifique `tsconfig.json` → `paths: { "@/*": ["./src/*"] }` e que `src/lib/database.types.ts` existe.
-
-### 7. **Supabase CLI: "Access token not provided"**
-**Causa:** `supabase gen types` precisa de Personal Access Token (PAT), não Service Role Key.
-**Solução:** Use tipos gerados manualmente (`src/lib/database.types.ts`) ou crie PAT em supabase.com/dashboard/account/tokens.
-
-### 8. **Erro 401/403 em RPCs**
-**Causa:** Usuário não autenticado ou RLS bloqueando.
-**Solução:** 
-- Verifique se `auth.uid()` corresponde ao `user_id` na query
-- RPCs têm `GRANT EXECUTE TO authenticated`
-- Tabelas têm policies `FOR ALL USING (auth.uid() = user_id)`
-
-### 9. **Build falha: "Module not found" em imports do Supabase**
-**Causa:** `@supabase/supabase-js` não instalado ou versão incompatível.
-**Solução:** `pnpm add @supabase/supabase-js@latest` e reinicie dev server.
-
-### 10. **Docker local: "port 5432 already in use"**
-**Causa:** PostgreSQL local rodando na porta padrão.
-**Solução:** Pare o serviço local (`sudo systemctl stop postgresql`) ou mude porta no `docker-compose.yml`.
-
----
-
-## 📁 Estrutura do Projeto
-
-```
-Hubble/
-├── .env.example              # Template de variáveis de ambiente
-├── .env.local                # Suas credenciais (NÃO COMMITAR)
-├── next.config.ts            # Config Next.js
-├── tsconfig.json             # TypeScript strict mode
-├── tailwind.config.ts        # Tailwind CSS
-├── package.json
-├── pnpm-lock.yaml
-├── README.md                 # Este arquivo
-├── PROJECT_SPEC.md           # Especificação técnica completa
-├── PROGRESS.md               # Log diário de progresso
-├── supabase/
-│   └── migrations/           # 6 migrations SQL (ordem numérica)
-│       ├── 20260816000001_init_schema.sql
-│       ├── 20260816000002_triggers.sql
-│       ├── 20260816000003_rpc_functions.sql
-│       ├── 20260816000004_fix_signup_and_test_user.sql
-│       ├── 20260816000005_fix_validate_progress.sql
-│       └── 20260816000006_fix_get_user_stats_v3.sql
-├── src/
-│   ├── app/                  # Next.js App Router
-│   │   ├── (auth)/           # Rotas de autenticação
-│   │   ├── (dashboard)/      # Área logada
-│   │   └── api/              # Route Handlers
-│   ├── components/           # Componentes React
-│   │   ├── ui/               # Primitivas (Button, Input, Card)
-│   │   ├── media/            # Cards, Lists, Details
-│   │   └── insights/         # Editor de Insights
-│   ├── lib/
-│   │   ├── database.types.ts # **Tipos gerados do banco (20KB+)**
-│   │   ├── supabase/         # Client + Server helpers
-│   │   └── utils/            # Helpers gerais
-│   ├── hooks/                # Custom React hooks
-│   └── types/                # Tipos compartilhados
-├── scripts/
-│   ├── enrich-from-anilist.js    # Enriquecimento via AniList GraphQL
-│   └── test-e2e-flow-fixed.js    # Teste E2E automatizado
-└── public/                   # Assets estáticos
-```
-
----
-
-## 🔐 Segurança & Boas Práticas
-
-- **RLS (Row Level Security)** em todas as tabelas de usuário
-- **Service Role Key** apenas em scripts server-side / GitHub Actions
-- **Anon Key** apenas no client (Next.js `NEXT_PUBLIC_*`)
-- **Triggers com `SECURITY DEFINER`** para operações cross-table
-- **Validação de enum** no banco + TypeScript
-- **Sanitização de Markdown** nos Insights (rehype-sanitize)
-- **Rate limiting** conservador em scripts de ingestão
-
----
-
-## 📄 Licença
-
-MIT License — sinta-se livre para usar, modificar e distribuir.
-
----
-
-<div align="center">
-
-  <p><strong>Made with ❤️ and 🖥️ by the Hubble Team</strong></p>
-  <p><em>"Explore o universo da mídia sem sair da órbita."</em></p>
-
-</div>
