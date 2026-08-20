@@ -91,6 +91,13 @@ export const importApi = {
   },
 };
 
+export const recommendationsApi = {
+  getHorizons: (limit?: number) =>
+    api.get<{ recommendations: any[] }>("/api/recommendations/horizons", { limit: String(limit || 10) }),
+  getAll: (limit?: number) =>
+    api.get<{ recommendations: any[] }>("/api/recommendations", { limit: String(limit || 10) }),
+};
+
 export const exportApi = {
   export: (format: "json" | "csv") =>
     api.get<{ downloadUrl: string }>("/api/export", { format }),

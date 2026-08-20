@@ -29,6 +29,7 @@ export interface MediaCatalog {
   synopsis: string | null;
   cover_url: string | null;
   backdrop_url: string | null;
+  trailer_url: string | null;
   release_year: number | null;
   release_status: ReleaseStatus;
   total_episodes: number;

@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { StreamingCard, ListRow, InsightsEditor, AgeRatingCard, AwardBadgeLarge } from "@/shared/ui";
+import { StreamingCard, ListRow, InsightsEditor, AgeRatingCard, AwardBadgeLarge, AgeRatingBadge, AwardBadge, Carousel, TrailerModal } from "@/shared/ui";
 import { cn, formatDate, formatRelativeTime, formatCompactNumber } from "@/lib/utils/cn";
 import { useToast } from "@/shared/ui/Toast";
-import { progressApi, insightsApi } from "@/shared/lib/api-client";
+import { progressApi, insightsApi, recommendationsApi } from "@/shared/lib/api-client";
 import { resolveTitle, pickLanguagePref } from "@/lib/i18n/titles";
 import { getRatingMeta, getPrestigeMeta, RATING_ORDER } from "@/lib/utils/ratings";
 import type { MediaCatalog, UserStatus, MediaWithProgress, Profile } from "@/types";
@@ -41,6 +41,8 @@ export default function MediaDetailPage() {
   const [loading, setLoading] = useState(true);
   const [savingProgress, setSavingProgress] = useState(false);
   const [savingInsights, setSavingInsights] = useState(false);
+  const [showTrailer, setShowTrailer] = useState(false);
+  const [recommendations, setRecommendations] = useState<MediaWithProgress[]>([]);
 
   // Fetch media + user progress
   useEffect(() => {
@@ -54,6 +56,17 @@ export default function MediaDetailPage() {
       if (!res.ok) throw new Error("Mídia não encontrada");
       const data = await res.json();
       setMedia({ ...data.media, title: data.media.title_default, progress: data.progress });
+      
+      // Fetch recommendations for carousel
+      try {
+        const recRes = await fetch(`/api/recommendations`);
+        if (recRes.ok) {
+          const recData = await recRes.json();
+          setRecommendations(recData.recommendations || []);
+        }
+      } catch {
+        // ignore recommendations failure
+      }
     } catch {
       addToast({ message: "Erro ao carregar mídia", type: "error" });
       router.push("/library");
@@ -126,20 +139,60 @@ export default function MediaDetailPage() {
 
   return (
     <article className="space-y-8">
-      {/* Header / Hero */}
+      {/* Hero / Backdrop Section - Cinema Mode */}
       <div className="relative rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800">
+        {/* Backdrop hero */}
         {media.backdrop_url && (
-          <Image
-            src={media.backdrop_url}
-            alt=""
-            fill
-            priority
-            className="object-cover opacity-40"
-            sizes="100vw"
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/80 to-transparent" />
+          <div className="relative h-[50vh] min-h-[400px] lg:min-h-[550px]">
+            <Image
+              src={media.backdrop_url}
+              alt=""
+              fill
+              priority
+              className="object-cover"
+              sizes="100vw"
+            />
+            {/* Dynamic gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/95 via-zinc-950/30 to-transparent" />
+            
+            {/* Badges on backdrop */}
+            <div className="absolute top-6 left-6 right-6 flex items-start justify-between gap-2">
+              {media.prestige_badge && media.prestige_badge !== 'none' && (
+                <AwardBadge badge={media.prestige_badge} size="md" />
+              )}
+              {media.is_adult && (
+                <AgeRatingBadge rating="18" size="md" variant="pill" />
+              )}
+            </div>
+            
+            {/* Bottom badges - age rating */}
+            {!media.is_adult && media.age_rating_br && media.age_rating_br !== 'L' && (
+              <div className="absolute bottom-6 left-6">
+                <AgeRatingBadge rating={media.age_rating_br} size="lg" />
+              </div>
+            )}
 
+            {/* Release status on backdrop */}
+            {media.release_status !== 'finished' && (
+              <div className="absolute bottom-6 right-6">
+                <span
+                  className={cn(
+                    "px-3 py-1 text-sm font-medium rounded-full capitalize",
+                    media.release_status === 'airing' && 'bg-green-600/90 text-white',
+                    media.release_status === 'hiatus' && 'bg-yellow-600/90 text-white',
+                    media.release_status === 'cancelled' && 'bg-red-600/90 text-white',
+                    media.release_status === 'upcoming' && 'bg-blue-600/90 text-white',
+                    media.release_status === 'orphaned' && 'bg-zinc-600/90 text-white',
+                  )}
+                >
+                  {media.release_status}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Content overlay */}
         <div className="relative p-6 sm:p-8 lg:p-12 flex flex-col lg:flex-row gap-8 items-start lg:items-center">
           {/* Cover */}
           <div className="relative w-full sm:w-52 lg:w-64 flex-shrink-0">
@@ -224,13 +277,35 @@ export default function MediaDetailPage() {
               ))}
             </div>
 
+            {/* Trailer button */}
+            {media.trailer_url && (
+              <button
+                onClick={() => setShowTrailer(true)}
+                className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
+                aria-label={`Assistir trailer de ${splitTitle.primary}`}
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+                Assistir Trailer
+              </button>
+            )}
+
             {media.synopsis && (
-              <p className="text-zinc-300 text-base leading-relaxed max-w-3xl mb-6 line-clamp-4">
+              <p className="text-zinc-300 text-base leading-relaxed max-w-3xl mt-6 line-clamp-4">
                 {media.synopsis}
               </p>
             )}
           </div>
         </div>
+
+        {/* Trailer Modal */}
+        <TrailerModal
+          open={showTrailer}
+          onClose={() => setShowTrailer(false)}
+          trailerUrl={media.trailer_url}
+          title={splitTitle.primary}
+        />
       </div>
 
       {/* Progress Section */}
@@ -349,6 +424,21 @@ export default function MediaDetailPage() {
           isOwner={true}
         />
       </section>
+
+      {/* Recommendations Carousel - Cinema Mode */}
+      {recommendations.length > 0 && (
+        <section>
+          <Carousel title="Recomendados para você" count={recommendations.length}>
+            {recommendations.map((rec) => (
+              <StreamingCard
+                key={rec.id}
+                media={rec}
+                variant="default"
+              />
+            ))}
+          </Carousel>
+        </section>
+      )}
 
       {/* Metadata */}
       <section className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6">

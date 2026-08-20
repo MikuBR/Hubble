@@ -13,3 +13,4 @@ export { InsightsEditor } from "./InsightsEditor";
 
 // Cinema mode components
 export { Carousel, CarouselCompact } from "./Carousel";
+export { TrailerModal } from "./TrailerModal";
