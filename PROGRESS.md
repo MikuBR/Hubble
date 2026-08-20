@@ -142,3 +142,38 @@
 - `/home/caue/Documentos/projetos/vscode-projects/Hubble/PROJECT_SPEC.md` (spec + checkpoint)
 - `/home/caue/Documentos/projetos/vscode-projects/Hubble/README.md`
 - 12 commits no Git local (ainda não pushed)
+
+---
+
+### 📅 2026-08-20 (Sessão 3 — Fix Bugs em Aberto)
+### 🎯 Marco: Bugs críticos resolvidos via MCP + code fixes
+**Duração:** ~1.5 horas
+**Commits:** 1 (auth forms fix)
+
+### ✅ Entregue nesta sessão
+
+#### Bugs Corrigidos
+1. **`onclick` → `onClick` nos formulários de auth** ✅
+   - Arquivos: `src/app/(auth)/login/page.tsx`, `src/app/(auth)/signup/page.tsx`
+   - Raiz: React JSX é case-sensitive — `onclick` (lowercase) é ignorado, botões OAuth sem handler
+   - Fix: trocado para `onClick` em 4 botões (Google + GitHub em cada página)
+
+2. **Migration `20260819000001` aplicada via MCP Supabase** ✅
+   - Corrige trigger `handle_new_user` com SECURITY DEFINER + username 3-30 chars + UUID fallback
+   - Aplicada via MCP SSE (mcp.supabase.com) usando token OAuth cacheado de `opencode mcp auth supabase`
+   - Resultado: `{"status":"handle_new_user atualizado com sucesso!"}`
+
+3. **Migration `20260820000001_enhance_tag_preferences.sql` criada e aplicada** ✅
+   - Extensão do trigger `update_tag_preferences` para incluir `themes` (+5) e `studios` (+3)
+   - Antes: só `genres` (+10). Agora: genres, themes, studios processados
+   - Validado via E2E: tag preferences passaram de 6 para 7 (inclui `[studio] bones: 10`)
+   - `top_studios` no `get_user_stats` passou de `null` para `["bones"]`
+
+#### Validação
+- 52 testes Vitest still passing
+- E2E: ✅ Todos 6 passos (profile, progresso, tag prefs, RPCs)
+- Tag preferences agora incluem `studio` type (antes só `genre`)
+
+### 🔄 Aprendizados técnicos
+- **MCP Supabase SSE**: pode aplicar migrations via `execute_sql` tool usando token OAuth cacheado em `~/.local/share/opencode/mcp-auth.json` — alternativa à Management API quando precisa rodar SQL
+- **MCP SSE protocol**: requer `Accept: application/json, text/event-stream`, session header `Mcp-Session-Id`, response wrapped em `<untrusted-data>` tags

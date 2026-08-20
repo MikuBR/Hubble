@@ -65,7 +65,7 @@ export default async function LoginPage() {
         <div className="mt-6 grid grid-cols-2 gap-3">
           <button
             type="button"
-            onclick={() => signInWithOAuth('google')}
+            onClick={() => signInWithOAuth('google')}
             className="py-2 px-4 bg-zinc-800 border border-zinc-700 rounded-lg hover:bg-zinc-700 transition-colors flex items-center justify-center gap-2"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -78,7 +78,7 @@ export default async function LoginPage() {
           </button>
           <button
             type="button"
-            onclick={() => signInWithOAuth('github')}
+            onClick={() => signInWithOAuth('github')}
             className="py-2 px-4 bg-zinc-800 border border-zinc-700 rounded-lg hover:bg-zinc-700 transition-colors flex items-center justify-center gap-2"
           >
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
