@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils/cn";
 import type { ReactNode } from "react";
+import * as React from "react";
 
 interface CarouselProps {
   children: ReactNode;
@@ -64,5 +65,3 @@ export function CarouselCompact({
   );
 }
 
-// Re-export React para uso interno
-import * as React from "react";

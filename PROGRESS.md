@@ -34,12 +34,13 @@
 
 ### 🐛 Issues identificados durante auditoria (Task 3)
 
-| # | Issue | Severidade | Blocker | Plano de Fix |
-|---|-------|------------|---------|--------------|
-| 1 | **Anime sem gêneros no catálogo** | Média | Não | Enriquecer `genres`/`themes`/`studios` via AniList no script de enriquecimento (campo vazio em 999 registros) |
-| 2 | **RPC `get_user_stats` falha com enum `reading`** | Média | Não | Corrigir SQL: remover referência a `'reading'` no enum `user_status_enum` (valores válidos: planning, watching, paused, completed, dropped, rewatching) |
-| 3 | **Signup real ainda falha** | Alta | Sim | Trigger `handle_new_user` precisa de `SECURITY DEFINER` + permissões corretas; testar com `admin.createUser()` após fix |
-| 4 | **Tag preferences não geradas** | Baixa | Não | Consequência do #1 — sem `genres` no anime, trigger não tem o que processar |
+| # | Issue | Severidade | Blocker | Status |
+|---|-------|------------|---------|--------|
+| 1 | **Anime sem gêneros no catálogo** | Média | Não | ✅ Resolvido — script `enrich-from-anilist.js` agora popula genres/themes/studios; migration `20260820000001` estende trigger |
+| 2 | **RPC `get_user_stats` falha com enum `reading`** | Média | Não | ✅ Resolvido — migration `20260816000006_fix_get_user_stats_v3.sql` remove `'reading'` e usa `IN ('watching', 'rewatching')` |
+| 3 | **Signup real ainda falha** | Alta | Sim | ✅ Resolvido no código — migration `20260819000001` corrige `handle_new_user` com SECURITY DEFINER + fallback de username 3-30 chars. **Pendente:** habilitar Email Provider no Supabase Dashboard para validar E2E |
+| 4 | **Tag preferences não geradas** | Baixa | Não | ✅ Resolvido — consequência de #1; trigger agora processa genres (+10), themes (+5), studios (+3) |
+| 5 | **`onclick` → `onClick` nos botões OAuth** | Alta | Sim | ✅ Resolvido — Sessão 3 corrigiu 4 botões em login.tsx e signup.tsx (React JSX case-sensitive) |
 
 ---
 
@@ -47,11 +48,9 @@
 
 | # | Tarefa | Estimativa |
 |---|--------|-----------|
-| 1 | ~~Corrigir script de enriquecimento para popular `genres`, `themes`, `studios`~~ | ✅ CONCLUÍDO |
-| 2 | ~~Corrigir RPC `get_user_stats` (enum `reading` inválido)~~ | ✅ CONCLUÍDO |
-| 3 | ~~Debugar e corrigir trigger `handle_new_user` para signup real~~ | ✅ CONCLUÍDO |
-| 4 | ~~Gerar `database.types.ts` real via Management API~~ | ✅ CONCLUÍDO (manual from migrations) |
-| 5 | Documentar setup no README | 20min |
+| 1 | Habilitar Email Provider no Supabase Dashboard + validar signup real E2E | 30min |
+| 2 | Rodar `pnpm enrich:anilist` para popular ~1k animes no catálogo | 30min |
+| 3 | Iniciar #5 (Modo Cinema) na branch `feat/streaming-mode` | 2 semanas |
 
 ---
 

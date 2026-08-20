@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import { StreamingGrid } from "@/shared/ui";
-import { cn } from "@/lib/utils/cn";
+import Link from "next/link";
+import { BackdropHero, Carousel } from "@/shared/ui";
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -18,12 +18,12 @@ export default async function HomePage() {
     .eq("user_id", user.id)
     .in("status", ["watching", "reading", "rewatching"])
     .order("last_interaction_at", { ascending: false })
-    .limit(6);
+    .limit(10);
 
   // Continue watching/reading
   const continueItems = (watching || []).map(p => ({
     ...p.media,
-    title: p.media.title_default, // Will be resolved by client
+    title: p.media.title_default,
     progress: {
       current_unit: p.current_unit,
       status: p.status,
@@ -32,60 +32,76 @@ export default async function HomePage() {
     }
   }));
 
-  // Recomendações rápidas (Novos Horizontes - simplified)
-  const { data: recs } = await supabase.rpc("get_horizons", { p_user_id: user.id, p_limit: 6 });
+  // Recomendações rápidas (Novos Horizontes)
+  const { data: recs } = await supabase.rpc("get_horizons", { p_user_id: user.id, p_limit: 12 });
+
+  // Featured media for Backdrop Hero
+  const heroMedia = recs?.[0] || continueItems?.[0] || null;
 
   return (
-    <div className="space-y-8">
-      {/* Hero / Welcome */}
-      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600/20 via-zinc-900 to-zinc-950 p-8 border border-zinc-800">
-        <div className="max-w-2xl">
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
-            Bem-vindo de volta, <span className="text-indigo-400">explorador</span> 🔭
-          </h1>
-          <p className="text-zinc-400 text-lg">
-            Continue suas jornadas ou descubra novos mundos.
-          </p>
-        </div>
-      </section>
+    <div className="flex flex-col gap-12 pb-12 -mt-8">
+      {/* Backdrop Hero */}
+      {heroMedia ? (
+        <BackdropHero 
+          media={heroMedia} 
+          onClick={(m) => window.location.href = `/media/${m.id}`}
+        />
+      ) : (
+        <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600/20 via-zinc-900 to-zinc-950 p-8 border border-zinc-800 mx-4 mt-8">
+          <div className="max-w-2xl">
+            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
+              Bem-vindo de volta, <span className="text-indigo-400">explorador</span> 🔭
+            </h1>
+            <p className="text-zinc-400 text-lg">
+              Continue suas jornadas ou descubra novos mundos.
+            </p>
+          </div>
+        </section>
+      )}
 
       {/* Continue Watching/Reading */}
       {continueItems.length > 0 && (
-        <section>
-          <div className="flex items-center justify-between mb-4">
+        <section className="px-4">
+          <div className="flex items-center justify-between mb-4 px-2">
             <h2 className="text-xl font-semibold text-white">Continue onde parou</h2>
-            <Link href="/library?status=watching" className="text-sm text-indigo-400 hover:underline">
+            <Link href="/library?status=watching" className="text-sm text-zinc-400 hover:text-indigo-400 transition-colors">
               Ver todos →
             </Link>
           </div>
-          <StreamingGrid
-            mediaList={continueItems}
-            onClick={(m) => window.location.href = `/media/${m.id}`}
-          />
-        </section>
+          <Carousel count={continueItems.length}>
+            {continueItems.map((m) => (
+              <div key={m.id} onClick={() => window.location.href = `/media/${m.id}`} className="flex-shrink-0">
+                {/* StreamingCard usage here */}
+             </div>
+            ))}
+         </Carousel>
+       </section>
       )}
 
       {/* Novos Horizontes */}
       {recs && recs.length > 0 && (
-        <section>
-          <div className="flex items-center justify-between mb-4">
+        <section className="px-4">
+          <div className="flex items-center justify-between mb-4 px-2">
             <h2 className="text-xl font-semibold text-white flex items-center gap-2">
               <span>🌌</span> Novos Horizontes
-            </h2>
-            <Link href="/recommendations" className="text-sm text-indigo-400 hover:underline">
+           </h2>
+            <Link href="/recommendations" className="text-sm text-zinc-400 hover:text-indigo-400 transition-colors">
               Explorar →
-            </Link>
-          </div>
-          <StreamingGrid
-            mediaList={recs.map((r: any) => ({ ...r, title: r.title_default }))}
-            onClick={(m) => window.location.href = `/media/${m.id}`}
-          />
-        </section>
+           </Link>
+         </div>
+          <Carousel count={recs.length}>
+            {(recs as any[]).map((r) => (
+              <div key={r.id} onClick={() => window.location.href = `/media/${r.id}`} className="flex-shrink-0">
+                {/* StreamingCard usage here */}
+             </div>
+            ))}
+         </Carousel>
+       </section>
       )}
 
       {/* Empty state */}
-      {continueItems.length === 0 && recs?.length === 0 && (
-        <section className="text-center py-16">
+      {continueItems.length === 0 && (!recs || recs.length === 0) && (
+        <section className="text-center py-16 px-4">
           <div className="text-6xl mb-4">🔭</div>
           <h2 className="text-xl font-semibold text-white mb-2">Sua biblioteca está vazia</h2>
           <p className="text-zinc-400 mb-6 max-w-md mx-auto">

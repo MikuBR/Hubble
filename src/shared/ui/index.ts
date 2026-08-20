@@ -12,5 +12,6 @@ export { ListRow, ReadingTable } from "./ListRow";
 export { InsightsEditor } from "./InsightsEditor";
 
 // Cinema mode components
+export { BackdropHero } from "./BackdropHero";
 export { Carousel, CarouselCompact } from "./Carousel";
 export { TrailerModal } from "./TrailerModal";

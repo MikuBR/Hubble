@@ -2,15 +2,16 @@
 
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { cn, formatCompactNumber } from "@/lib/utils/cn";
+import { cn } from "@/lib/utils/cn";
 import { AgeRatingBadge, AwardBadge } from "./index";
-import type { MediaCatalog } from "@/types/database.types";
+import type { MediaCatalog } from "@/types";
 
 interface StreamingCardProps {
   media: MediaCatalog & { title?: string };
-  variant?: "default" | "compact";
+  variant?: "default" | "compact" | "hero";
   onClick?: () => void;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 export function StreamingCard({
@@ -18,34 +19,40 @@ export function StreamingCard({
   variant = "default",
   onClick,
   className,
+  style,
 }: StreamingCardProps) {
   const isAdult = media.is_adult;
   const hasBackdrop = media.backdrop_url;
+
+  // Hero variant uses landscape backdrop if available
+  const isHero = variant === "hero";
 
   return (
     <motion.article
       className={cn(
         "group relative cursor-pointer select-none",
         variant === "compact" && "w-32",
+        variant === "hero" && "w-[400px] sm:w-[500px]",
         className
       )}
       onClick={onClick}
-      whileHover={{ scale: 1.02, y: -4, transition: { duration: 150 } }}
-      layout
+      whileHover={{ scale: 1.02, y: -4, transition: { duration: 0.15 } }}
+      style={style}
     >
       {/* Imagem principal */}
       <div
         className={cn(
           "relative overflow-hidden rounded-xl bg-zinc-800",
-          variant === "default" ? "aspect-[2/3]" : "aspect-[2/3] w-full"
+          isHero ? "aspect-video" : "aspect-[2/3]",
+          !isHero && variant !== "compact" && "w-full"
         )}
       >
         {hasBackdrop ? (
           <Image
-            src={media.backdrop_url}
-            alt=""
+            src={media.backdrop_url!}
+            alt={media.title || media.title_default}
             fill
-            sizes={variant === "default" ? "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" : "100vw"}
+            sizes={isHero ? "800px" : "(max-width: 640px) 100vw, 33vw"}
             className="object-cover transition-opacity duration-300 group-hover:opacity-80"
             placeholder="blur"
             blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
@@ -53,11 +60,10 @@ export function StreamingCard({
         ) : media.cover_url ? (
           <Image
             src={media.cover_url}
-            alt={media.title_default}
+            alt={media.title || media.title_default}
             fill
-            sizes={variant === "default" ? "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" : "100vw"}
+            sizes="(max-width: 640px) 100vw, 33vw"
             className="object-cover transition-opacity duration-300 group-hover:opacity-80"
-            placeholder="blur"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-zinc-800">
@@ -80,63 +86,35 @@ export function StreamingCard({
           )}
         </div>
 
-        {/* Badges fundo - idade */}
-        {!isAdult && media.age_rating_br && media.age_rating_br !== 'L' && (
-          <div className="absolute bottom-2 left-2">
-            <AgeRatingBadge rating={media.age_rating_br} size="sm" />
-          </div>
-        )}
-
-        {/* Status de release */}
-        {media.release_status !== 'finished' && (
-          <div className="absolute bottom-2 right-2">
-            <span
-              className={cn(
-                "px-2 py-0.5 text-xs font-medium rounded-full capitalize",
-                media.release_status === 'airing' && 'bg-green-600/90 text-white',
-                media.release_status === 'hiatus' && 'bg-yellow-600/90 text-white',
-                media.release_status === 'cancelled' && 'bg-red-600/90 text-white',
-                media.release_status === 'upcoming' && 'bg-blue-600/90 text-white',
-                media.release_status === 'orphaned' && 'bg-zinc-600/90 text-white',
+        {/* Info overlay for Hero */}
+        {isHero && (
+          <div className="absolute bottom-3 left-3 right-3">
+             <h3 className="font-bold text-white text-lg line-clamp-1">
+              {media.title || media.title_default}
+            </h3>
+            <div className="flex items-center gap-2 text-xs text-zinc-300 mt-1">
+              {media.release_year && <span>{media.release_year}</span>}
+              {media.user_score_global && (
+                <span className="flex items-center gap-1 text-yellow-400">
+                  <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                  </svg>
+                  {media.user_score_global.toFixed(1)}
+                </span>
               )}
-            >
-              {media.release_status}
-            </span>
+            </div>
           </div>
-        )}
-
-        {/* NSFW blur overlay */}
-        {isAdult && (
-          <AnimatePresence mode="wait">
-            <motion.div
-              initial={{ opacity: 1 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 nsfw-blur flex items-center justify-center bg-zinc-950/50 z-10"
-            >
-              <div className="text-center p-4">
-                <p className="text-zinc-400 text-sm mb-2">Conteúdo adulto</p>
-                <button
-                  className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs rounded transition-colors"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  Revelar
-                </button>
-              </div>
-            </motion.div>
-          </AnimatePresence>
         )}
       </div>
 
-      {/* Info text */}
-      {variant === "default" && (
+      {/* Info text for non-hero */}
+      {!isHero && variant !== "compact" && (
         <div className="mt-2 min-h-[60px]">
           <h3 className="font-medium text-white line-clamp-2 group-hover:text-indigo-400 transition-colors">
-            {media.title}
+            {media.title || media.title_default}
           </h3>
           <div className="flex items-center gap-2 mt-1 text-xs text-zinc-500">
             {media.release_year && <span>{media.release_year}</span>}
-            {media.release_year && media.user_score_global && <span>·</span>}
             {media.user_score_global && (
               <span className="flex items-center gap-1 text-yellow-400">
                 <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24">
@@ -152,9 +130,6 @@ export function StreamingCard({
   );
 }
 
-/**
- * Grid de StreamingCards responsivo
- */
 export function StreamingGrid({
   mediaList,
   onClick,
@@ -172,7 +147,6 @@ export function StreamingGrid({
         className
       )}
       role="list"
-      aria-label="Grade de mídias"
     >
       {mediaList.map((media, index) => (
         <StreamingCard
@@ -182,11 +156,6 @@ export function StreamingGrid({
           style={{ animationDelay: `${index * 30}ms` }}
         />
       ))}
-      {mediaList.length === 0 && (
-        <div className="col-span-full py-12 text-center text-zinc-500">
-          <p>Nenhuma mídia encontrada</p>
-        </div>
-      )}
     </div>
   );
 }

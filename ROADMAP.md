@@ -28,7 +28,7 @@
 
 Prioridade: backend/UX first. Protagonista = feature core. Desfechos = polish.
 
-Status: ⚠️ Items #2 e #4 (parte desta sessão) já aplicados. Veja `PROGRESS.md` sessão 3.
+Status: ✅ Items #2 e #4 aplicados. Issues 1-5 do PROGRESS.md fechadas. Veja `PROGRESS.md` sessão 3.
 
 ### Parte 1 — Foundation Gaps (fechar o que está 85% aberto)
 
@@ -48,7 +48,7 @@ Status: ⚠️ Items #2 e #4 (parte desta sessão) já aplicados. Veja `PROGRESS
 - Validar que `genres/themes/studios` estão populados
 - Estimativa: 30min (script já existe)
 
-**#4 Corrigir estrutura de pastas para Feature-Sliced Design real**
+**#4 Corrigir estrutura de pastas para Feature-Sliced Design real** (em andamento na branch feat/streaming-mode)
 - Código atual usa `src/app/`, `src/shared/ui/`, `src/lib/` mas falta `src/features/`
 - Migrar páginas do dashboard para `src/features/`
 - Estimativa: 1h
