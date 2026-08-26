@@ -39,7 +39,7 @@ export async function PATCH(
         private_insights: content,
         updated_at: new Date().toISOString(),
         last_interaction_at: new Date().toISOString(),
-      },
+      } as any,
       { onConflict: "user_id,media_id" }
     )
     .select()
@@ -49,5 +49,5 @@ export async function PATCH(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true, insights: data.private_insights });
+  return NextResponse.json({ success: true, insights: (data as any).private_insights });
 }

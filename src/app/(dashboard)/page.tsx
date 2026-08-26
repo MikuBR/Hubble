@@ -21,7 +21,7 @@ export default async function HomePage() {
     .limit(10);
 
   // Continue watching/reading
-  const continueItems = (watching || []).map(p => ({
+  const continueItems = (watching || []).map((p: any) => ({
     ...p.media,
     title: p.media.title_default,
     progress: {
@@ -29,14 +29,15 @@ export default async function HomePage() {
       status: p.status,
       user_score: p.user_score,
       rewatch_count: p.rewatch_count,
-    }
+    },
   }));
 
   // Recomendações rápidas (Novos Horizontes)
-  const { data: recs } = await supabase.rpc("get_horizons", { p_user_id: user.id, p_limit: 12 });
+  const { data: recs } = await supabase.rpc("get_horizons", { p_user_id: user.id, p_limit: 12 } as any);
+  const recommendations = (recs ?? []) as any[];
 
   // Featured media for Backdrop Hero
-  const heroMedia = recs?.[0] || continueItems?.[0] || null;
+  const heroMedia = recommendations[0] || continueItems[0] || null;
 
   return (
     <div className="flex flex-col gap-12 pb-12 -mt-8">
@@ -79,7 +80,7 @@ export default async function HomePage() {
       )}
 
       {/* Novos Horizontes */}
-      {recs && recs.length > 0 && (
+      {recommendations.length > 0 && (
         <section className="px-4">
           <div className="flex items-center justify-between mb-4 px-2">
             <h2 className="text-xl font-semibold text-white flex items-center gap-2">
@@ -89,8 +90,8 @@ export default async function HomePage() {
               Explorar →
            </Link>
          </div>
-          <Carousel count={recs.length}>
-            {(recs as any[]).map((r) => (
+          <Carousel count={recommendations.length}>
+            {recommendations.map((r: any) => (
               <div key={r.id} onClick={() => window.location.href = `/media/${r.id}`} className="flex-shrink-0">
                 {/* StreamingCard usage here */}
              </div>
@@ -100,7 +101,7 @@ export default async function HomePage() {
       )}
 
       {/* Empty state */}
-      {continueItems.length === 0 && (!recs || recs.length === 0) && (
+      {continueItems.length === 0 && recommendations.length === 0 && (
         <section className="text-center py-16 px-4">
           <div className="text-6xl mb-4">🔭</div>
           <h2 className="text-xl font-semibold text-white mb-2">Sua biblioteca está vazia</h2>

@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * Shared API client for server/client components
  */
@@ -61,7 +63,9 @@ export const searchApi = {
   search: (q: string, options?: { type?: string; limit?: number; offset?: number }) =>
     api.get<{ results: any[]; pagination: any }>("/api/search", {
       q,
-      ...options,
+      ...(options?.type ? { type: options.type } : {}),
+      ...(options?.limit ? { limit: String(options.limit) } : {}),
+      ...(options?.offset ? { offset: String(options.offset) } : {}),
     }),
 };
 

@@ -5,7 +5,7 @@ import { resolveTitle, pickLanguagePref } from "@/lib/i18n/titles";
 
 const SearchQuerySchema = z.object({
   q: z.string().min(1).max(100),
-  type: z.enum(['movie', 'tv_series', 'anime', 'manga', 'manhwa', 'manhua', 'novel', 'book', 'game', 'all']).optional(),
+  type: z.enum(['movie', 'tv_series', 'anime', 'manga', 'manhwa', 'manhua', 'novel', 'book', 'game', 'all']).nullable().optional(),
   limit: z.coerce.number().min(1).max(50).default(20),
   offset: z.coerce.number().min(0).default(0),
 });

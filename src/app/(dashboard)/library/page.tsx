@@ -94,14 +94,23 @@ export default function LibraryPage() {
           <h1 className="text-2xl font-bold text-white">Biblioteca</h1>
           <p className="text-zinc-400">Gerencie suas mídias</p>
         </div>
-        <div className="flex items-center gap-2">
-          <select
-            value={viewMode}
-            onChange={(e) => setViewMode(e.target.value as "grid" | "list")}
-            className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            {VIEW_MODES.map(v => <option key={v.value} value={v.value}>{v.icon} {v.label}</option>)}
-          </select>
+        <div className="flex items-center gap-1 bg-zinc-800/60 p-1 rounded-lg border border-zinc-700/60">
+          {VIEW_MODES.map((v) => (
+            <button
+              key={v.value}
+              onClick={() => setViewMode(v.value as "grid" | "list")}
+              className={cn(
+                "px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+                viewMode === v.value
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "text-zinc-400 hover:text-white hover:bg-zinc-700/50"
+              )}
+              title={v.label}
+            >
+              <span aria-hidden="true">{v.icon}</span>
+              <span className="ml-1 hidden sm:inline">{v.label}</span>
+            </button>
+          ))}
         </div>
       </div>
 

@@ -47,11 +47,18 @@ export default function SettingsPage() {
 
       const { error } = await supabase
         .from("profiles")
-        .upsert({ id: user.id, ...formData })
+        .upsert({ id: user.id, ...formData } as any)
         .select()
         .single();
 
       if (error) throw error;
+
+      // Sync theme to localStorage for immediate UI effect
+      if (formData.theme) {
+        localStorage.setItem("hubble-theme", formData.theme);
+        window.dispatchEvent(new Event("hubble-theme-change"));
+      }
+
       addToast({ message: "Configurações salvas!", type: "success" });
     } catch {
       addToast({ message: "Falha ao salvar", type: "error" });

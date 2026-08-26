@@ -1,7 +1,9 @@
 "use client";
 
+import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/shared/ui";
 import { useToast } from "@/shared/ui/Toast";
@@ -158,5 +160,3 @@ async function handleSignOut() {
   await supabase.auth.signOut();
   window.location.href = "/login";
 }
-
-import { useState } from "react";

@@ -2,15 +2,23 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { StreamingCard, ListRow, InsightsEditor, AgeRatingCard, AwardBadgeLarge, AgeRatingBadge, AwardBadge, Carousel, TrailerModal } from "@/shared/ui";
-import { cn, formatDate, formatRelativeTime, formatCompactNumber } from "@/lib/utils/cn";
+import {
+  StreamingCard,
+  InsightsEditor,
+  AgeRatingCard,
+  AwardBadgeLarge,
+  AgeRatingBadge,
+  AwardBadge,
+  Carousel,
+  TrailerModal,
+} from "@/shared/ui";
+import { cn, formatDate, formatCompactNumber } from "@/lib/utils/cn";
 import { useToast } from "@/shared/ui/Toast";
 import { progressApi, insightsApi, recommendationsApi } from "@/shared/lib/api-client";
-import { resolveTitle, pickLanguagePref } from "@/lib/i18n/titles";
-import { getRatingMeta, getPrestigeMeta, RATING_ORDER } from "@/lib/utils/ratings";
-import type { MediaCatalog, UserStatus, MediaWithProgress, Profile } from "@/types";
+import { resolveTitle } from "@/lib/i18n/titles";
+import { getRatingMeta, getPrestigeMeta } from "@/lib/utils/ratings";
+import type { UserStatus, MediaWithProgress, Profile } from "@/types";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import Image from "next/image";
 
 const STATUS_LABELS: Record<UserStatus, string> = {
@@ -322,7 +330,7 @@ export default function MediaDetailPage() {
               disabled={savingProgress}
               className={cn(
                 "w-full px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none cursor-pointer",
-                STATUS_COLORS[media.progress?.status || "planning"]
+                STATUS_COLORS[((media.progress?.status || "planning") as UserStatus)]
               )}
             >
               {Object.entries(STATUS_LABELS).map(([value, label]) => (
@@ -346,7 +354,7 @@ export default function MediaDetailPage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => handleProgressUpdate({ increment: true })}
-                  disabled={savingProgress || (hasTotal && currentUnit >= totalUnits)}
+                  disabled={savingProgress || Boolean(hasTotal && currentUnit >= totalUnits)}
                   className="p-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-zinc-300 hover:text-white transition-colors disabled:opacity-50"
                   aria-label="Incrementar"
                 >

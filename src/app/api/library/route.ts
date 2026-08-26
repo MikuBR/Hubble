@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const results = (data || []).map(item => ({
+  const results = ((data || []) as any[]).map(item => ({
     ...item.media,
     title: item.media.title_default,
     progress: {
