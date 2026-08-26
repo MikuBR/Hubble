@@ -1,18 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Header } from "@/widgets/header";
-import { cn } from "@/lib/utils/cn";
-import Link from "next/link";
-
-const NAV_ITEMS = [
-  { href: "/library", label: "Biblioteca", icon: "📚", exact: false },
-  { href: "/library?status=watching", label: "Assistindo", icon: "▶️", exact: false },
-  { href: "/library?status=reading", label: "Lendo", icon: "📖", exact: false },
-  { href: "/library?status=completed", label: "Concluídos", icon: "✅", exact: false },
-  { href: "/search", label: "Buscar", icon: "🔍", exact: false },
-  { href: "/recommendations", label: "Novos Horizontes", icon: "🌌", exact: false },
-  { href: "/settings", label: "Configurações", icon: "⚙️", exact: true },
-];
 
 export default async function DashboardLayout({
   children,
