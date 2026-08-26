@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { Header } from "@/widgets/header";
 import { cn } from "@/lib/utils/cn";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 
 const NAV_ITEMS = [
   { href: "/library", label: "Biblioteca", icon: "📚", exact: false },
