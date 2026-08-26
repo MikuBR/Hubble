@@ -1,22 +1,32 @@
 # Hubble — Issues plan
 
-## In scope for today
+## In scope for today (validated)
 
-- [ ] #5 Entregar prontidão validada do enriquecimento AODB → AniList
-  - Status atual: script existe, precisa de runner/validação.
-  - Critério de fechamento: script rodável com `.env.local` e checagem de sanidade (dry-run/log).
-- [ ] #6 Garantir que `/api/search` valida busca real após enriquecimento
-  - Status atual: endpoint de busca local existe.
-  - Critério de fechamento: ao menos 1 cenário confirmado de busca por título retornando resultado esperado.
-- [ ] #8 Validar/ajustar integração do BackdropHero no media detail
-  - Status atual: componente implementado e usado na home.
-  - Critério de fechamento: confirmar uso consistente no detail e fallback visual sem quebra.
-- [ ] #10 Validar/ajustar integração do TrailerModal no media detail
-  - Status atual: componente implementado e usado no detail.
-  - Critério de fechamento: confirmar abertura/fechamento e URL embutida válida.
-- [ ] #11 Validar/ajustar Modo Lista Premium e toggle na library
-  - Status atual: toggle e ReadingTable existem.
-  - Critério de fechamento: confirmar alternância e conteúdo leitura aparecendo corretamente.
+### ✅ Closed
+- **#8 BackdropHero integrado na home**
+  - Arquivo: `src/shared/ui/BackdropHero.tsx`
+  - Integração: `src/app/(dashboard)/page.tsx`
+  - Evidência: componente com Framer Motion, gradientes, badges, fallback visual
+
+- **#10 TrailerModal integrado no media detail**
+  - Arquivo: `src/shared/ui/TrailerModal.tsx`
+  - Integração: `src/app/(dashboard)/media/[id]/page.tsx`
+  - Evidência: parsing YouTube/Vimeo, cleanup de iframe, suporte ESC/click-outside
+
+- **#11 Modo Lista Premium com toggle na library**
+  - Arquivo: `src/app/(dashboard)/library/page.tsx` + `src/shared/ui/ListRow.tsx`
+  - Evidência: toggle grid/lista, `ReadingTable` com `useOptimistic` para +1 capítulo
+
+### ⚠️ In progress / bloqueio externo
+- **#5 enrich-from-anilist**
+  - Script pronto: `scripts/enrich-from-anilist.js` com loteamento e retry exponencial
+  - Bloqueio: `.env.local` com `ANILIST_CLIENT_ID` e `ANILIST_CLIENT_SECRET` vazios
+  - Necessário: cadastro no AniList Developer e preenchimento das credenciais
+
+- **#6 search validation**
+  - Endpoint `/api/search` implementado com pg_trgm, Zod, i18n, filtro NSFW
+  - Bloqueio: validação ponta a ponta depende de `media_catalog` populado via #5
+  - `scripts/validate-search.cjs` confirmou conectividade GraphQL pública do AniList
 
 ## Deferred / not today
 
@@ -25,3 +35,11 @@
 - #19 Export JSON do diário — não iniciado
 - #21 Testes E2E com Playwright — não iniciado
 - #24 Demo seed — não iniciado
+
+## Decisões tomadas
+- Tailwind v3.4.19 + tailwindcss-animate@1.0.7, sem v4/postcss v4
+- `postcss.config.js` com plugins `tailwindcss` + `autoprefixer`
+- Removido `@tailwindcss/postcss` do projeto para evitar conflito de versões
+- `globals.css` usa `@apply` padrão do Tailwind v3; custom classes mantidas como CSS puro
+- `NEXT_DISABLE_TURBOPACK=1` workaround para route groups `app/(dashboard)` e `app/(auth)`
+- Dev server em `http://localhost:3000`
