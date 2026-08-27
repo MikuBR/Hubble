@@ -9,10 +9,10 @@ import type { MediaCatalog } from "@/types";
 
 interface BackdropHeroProps {
   media: MediaCatalog & { title?: string };
-  onClick: (media: MediaCatalog) => void;
+  href?: string;
 }
 
-export function BackdropHero({ media, onClick }: BackdropHeroProps) {
+export function BackdropHero({ media, href }: BackdropHeroProps) {
   const title = media.title || media.title_default;
   const isAdult = media.is_adult;
   const hasBackdrop = media.backdrop_url;
@@ -135,7 +135,7 @@ export function BackdropHero({ media, onClick }: BackdropHeroProps) {
             className="flex flex-wrap gap-3"
           >
             <button
-              onClick={(e) => { e.stopPropagation(); onClick(media); }}
+              onClick={(e) => { e.stopPropagation(); window.location.href = href ?? `/media/${media.id}`; }}
               className={cn(
                 "flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-base",
                 "bg-white text-zinc-950 hover:bg-white/90",

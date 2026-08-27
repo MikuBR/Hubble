@@ -43,9 +43,9 @@ export default async function HomePage() {
     <div className="flex flex-col gap-12 pb-12 -mt-8">
       {/* Backdrop Hero */}
       {heroMedia ? (
-        <BackdropHero 
-          media={heroMedia} 
-          onClick={(m) => window.location.href = `/media/${m.id}`}
+        <BackdropHero
+          media={heroMedia}
+          href={`/media/${heroMedia.id}`}
         />
       ) : (
         <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600/20 via-zinc-900 to-zinc-950 p-8 border border-zinc-800 mx-4 mt-8">
@@ -71,11 +71,11 @@ export default async function HomePage() {
           </div>
           <Carousel count={continueItems.length}>
             {continueItems.map((m) => (
-              <div key={m.id} onClick={() => window.location.href = `/media/${m.id}`} className="flex-shrink-0">
-                {/* StreamingCard usage here */}
-             </div>
+              <Link key={m.id} href={`/media/${m.id}`} className="flex-shrink-0 no-underline">
+                <div>{/* StreamingCard usage here */}</div>
+              </Link>
             ))}
-         </Carousel>
+          </Carousel>
        </section>
       )}
 
@@ -92,11 +92,11 @@ export default async function HomePage() {
          </div>
           <Carousel count={recommendations.length}>
             {recommendations.map((r: any) => (
-              <div key={r.id} onClick={() => window.location.href = `/media/${r.id}`} className="flex-shrink-0">
-                {/* StreamingCard usage here */}
-             </div>
+              <Link key={r.id} href={`/media/${r.id}`} className="flex-shrink-0 no-underline">
+                <div>{/* StreamingCard usage here */}</div>
+              </Link>
             ))}
-         </Carousel>
+          </Carousel>
        </section>
       )}
 
