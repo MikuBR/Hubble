@@ -16,6 +16,10 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<"general" | "appearance" | "language" | "privacy" | "import" | "export">("general");
   const [formData, setFormData] = useState<Partial<Profile>>({});
+  // Armazena uid + anon client no contexto para o AvatarFileInput poder fazer upload.
+  // (O anon client é suficiente porque a RLS do bucket 'avatars' valida o owner pelo
+  //  prefixo do path: storage.foldername(name)[1] = auth.uid().)
+  const [userContext, setUserContext] = useState<{ uid: string; client: ReturnType<typeof createClient> } | null>(null);
 
   // Fetch profile
   useEffect(() => {
@@ -25,6 +29,7 @@ export default function SettingsPage() {
   async function fetchProfile() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
+    setUserContext({ uid: user.id, client: supabase });
 
     const { data } = await supabase
       .from("profiles")
@@ -110,7 +115,7 @@ export default function SettingsPage() {
 
       {/* Tab Panels */}
       <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 space-y-6">
-        {activeTab === "general" && <GeneralTab formData={formData} setFormData={setFormData} profile={profile} />}
+        {activeTab === "general" && <GeneralTab formData={formData} setFormData={setFormData} profile={profile} userContext={userContext} />}
         {activeTab === "appearance" && <AppearanceTab formData={formData} setFormData={setFormData} />}
         {activeTab === "language" && <LanguageTab formData={formData} setFormData={setFormData} />}
         {activeTab === "privacy" && <PrivacyTab formData={formData} setFormData={setFormData} />}
@@ -127,7 +132,17 @@ export default function SettingsPage() {
   );
 }
 
-function GeneralTab({ formData, setFormData, profile }: { formData: Partial<Profile>; setFormData: React.Dispatch<React.SetStateAction<Partial<Profile>>>; profile: Profile | null }) {
+function GeneralTab({
+  formData,
+  setFormData,
+  profile,
+  userContext,
+}: {
+  formData: Partial<Profile>;
+  setFormData: React.Dispatch<React.SetStateAction<Partial<Profile>>>;
+  profile: Profile | null;
+  userContext: { uid: string; client: any } | null;
+}) {
   return (
     <div className="space-y-6">
       <h2 className="text-lg font-semibold text-white">Geral</h2>
@@ -164,7 +179,153 @@ function GeneralTab({ formData, setFormData, profile }: { formData: Partial<Prof
         {formData.avatar_url && (
           <img src={formData.avatar_url} alt="Preview" className="mt-2 w-16 h-16 rounded-full object-cover" />
         )}
+
+        <div className="mt-4">
+          <label className="block text-sm font-medium text-zinc-300 mb-2">
+            Upload de Avatar (via bucket <code className="text-indigo-300">avatars</code>)
+          </label>
+          <p className="text-xs text-zinc-500 mb-2">
+            Selecione uma imagem para fazer upload direto ao bucket
+            <code className="text-zinc-400"> avatars/&lt;uid&gt;/avatar.png</code>
+            &nbsp;e salvar automaticamente em <code className="text-zinc-400">profiles.avatar_url</code>.
+            <br/>
+            O caminho usa seu UID como prefixo — RLS no backend garante que só você pode escrever/excluir.
+          </p>
+          <AvatarFileInput userContext={userContext} onUploadSuccess={setFormData} />
+        </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * AvatarFileInput — component `use client` que gerencia o upload de avatar
+ * para o bucket 'avatars' no Supabase Storage.
+ *
+ * Fluxo:
+ *   1. Usuário seleciona arquivo via <input type="file">.
+ *   2. Client faz upload para avatars/{uid}/avatar.png via anon client.
+ *      A RLS no bucket (policies avatars_insert_owner / avatars_update_owner)
+ *      garante que apenas o uid no prefixo do path pode escrever.
+ *   3. Obtem URL pública via supabase.storage.from('avatars').getPublicUrl().
+ *   4. Atualiza profiles.avatar_url e notifica o pai.
+ *
+ * @param userContext  uid + anon client (passado de SettingsPage).
+ * @param onUploadSuccess  callback chamado com o novo { avatar_url } quando o upload conclui.
+ */
+function AvatarFileInput({
+  userContext,
+  onUploadSuccess,
+}: {
+  userContext: { uid: string; client: any } | null;
+  onUploadSuccess: (data: Partial<Profile>) => void;
+}) {
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const { addToast } = useToast();
+
+  useEffect(() => {
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  async function handleSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (f.size > 10 * 1024 * 1024) {
+      addToast({ message: "Arquivo muito grande (máx 10 MB)", type: "error" });
+      return;
+    }
+    if (!f.type.startsWith("image/")) {
+      addToast({ message: "Selecione uma imagem (PNG/JPG/WEBP/GIF)", type: "error" });
+      return;
+    }
+    setFile(f);
+  }
+
+  async function handleUpload() {
+    if (!file || !userContext) {
+      addToast({ message: "Selecione uma imagem primeiro", type: "error" });
+      return;
+    }
+    const { uid, client } = userContext;
+    setUploading(true);
+    try {
+      const path = `${uid}/avatar.png`;
+      const { data, error } = await client
+        .storage
+        .from("avatars")
+        .upload(path, file, { upsert: true, contentType: file.type });
+
+      if (error) throw error;
+
+      // Obtém URL pública
+      const {
+        data: { publicUrl },
+      } = client.storage.from("avatars").getPublicUrl(path);
+
+      // Salva no perfil
+      const { error: updateErr } = await client
+        .from("profiles")
+        .update({ avatar_url: publicUrl })
+        .eq("id", uid);
+      if (updateErr) throw updateErr;
+
+      onUploadSuccess({ avatar_url: publicUrl });
+      addToast({ message: "Avatar atualizado!", type: "success" });
+    } catch (err) {
+      // Diagnóstico: se erro for 'bucket_not_found', o bucket ainda precisa ser criado.
+      const msg = err instanceof Error ? err.message : "Erro ao fazer upload do avatar";
+      if (msg.toLowerCase().includes("bucket") || msg.includes("404")) {
+        addToast({
+          message:
+            "Bucket 'avatars' não encontrado. Execute: supabase storage create avatars --public",
+          type: "error",
+        });
+      } else {
+        addToast({ message: `Falha no upload: ${msg}`, type: "error" });
+      }
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  if (!userContext) {
+    return (
+      <div className="flex items-center gap-3">
+        <Button variant="secondary" disabled>
+          ⚠️ Faça login para fazer upload de avatar
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <input
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/gif"
+        onChange={handleSelect}
+        className="flex-1 px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer"
+      />
+      <Button
+        variant="secondary"
+        onClick={handleUpload}
+        disabled={!file || uploading}
+        loading={uploading}
+      >
+        {uploading ? "Enviando..." : "Upload"}
+      </Button>
+      {previewUrl && (
+        <img
+          src={previewUrl}
+          alt="Preview"
+          className="w-12 h-12 rounded-full object-cover border border-zinc-700"
+        />
+      )}
     </div>
   );
 }

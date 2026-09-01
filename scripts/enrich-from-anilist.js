@@ -31,7 +31,7 @@ const supabase = createClient(
 // GraphQL Query para buscar dados completos do anime
 const ANILIST_QUERY = `
 query GetMedia($id: Int) {
-  Media(id: $id, type: ANIME) {
+  Media(id: $id) {
     id
     idMal
     title {
@@ -49,6 +49,8 @@ query GetMedia($id: Int) {
     season
     seasonYear
     episodes
+    chapters
+    volumes
     duration
     coverImage {
       extraLarge
@@ -73,6 +75,13 @@ query GetMedia($id: Int) {
       }
       edges {
         isMain
+      }
+    }
+    staff {
+      nodes {
+        name
+        isMain
+        roles
       }
     }
     averageScore
@@ -124,17 +133,34 @@ const STATUS_MAP = {
 };
 
 // Mapeamento de format AniList → media_type_enum
+// Usado quando AniList retornar `format` (ex: TV, MOVIE, MANGA, ONE_SHOT...)
 const FORMAT_MAP = {
   'TV': 'anime',
   'TV_SHORT': 'anime',
-  'MOVIE': 'anime',
   'SPECIAL': 'anime',
   'OVA': 'anime',
   'ONA': 'anime',
+  'MOVIE': 'movie',
   'MUSIC': 'anime',
   'MANGA': 'manga',
   'NOVEL': 'novel',
-  'ONE_SHOT': 'manga'
+  'ONE_SHOT': 'manga',
+};
+
+// Mapeamento de type AniList (MediaListType enum) → media_type_enum.
+// ANILIST NOTE: AniList define 11 enum values no MediaListType, mas 9 são válidos para o
+// filtro Page.media.type. PERSON e STUDIO são tipos de nó, não mídias — não aplicáveis.
+// VIZ_NOVEL (Light Novel) não tem equivalente exato; cai para 'novel'.
+const ANILIST_TYPE_MAP = {
+  'ANIME': 'anime',
+  'MANGA': 'manga',
+  'MANHWA': 'manhwa',
+  'MANHUA': 'manhua',
+  'NOVEL': 'novel',
+  'ONE_SHOT': 'manga',
+  'VISUAL_NOVEL': 'game',
+  'VIZ_NOVEL': 'novel',
+  // 'PERSON', 'STUDIO' — são tipos de entidade, não mídias
 };
 
 function makeGraphQLRequest(query, variables) {
@@ -211,15 +237,26 @@ function transformToMediaCatalog(anime, mapping) {
 
   const startYear = anime.startDate?.year;
   const endYear = anime.endDate?.year;
-  
-  // Extrair studios (apenas animation studios)
-  const studios = anime.studios?.nodes
+
+  // Extrair studios: staff.nodes (todos os estúdios) + animation studios
+  const staffStudios = new Set();
+  if (anime.staff?.nodes) {
+    for (const node of anime.staff.nodes) {
+      if (node.roles && node.roles.includes('Studio')) {
+        staffStudios.add(node.name);
+      }
+    }
+  }
+  const animationStudios = anime.studios?.nodes
     ?.filter(s => s.isAnimationStudio)
     ?.map(s => s.name) || [];
+  const studios = [...staffStudios, ...animationStudios].filter(
+    (v, i, a) => a.indexOf(v) === i
+  );
 
   // Extrair tags relevantes (genres + themes)
   const tags = anime.tags || [];
-  
+
   // Usar anime.genres se disponível, senão extrair de tags
   let genres = anime.genres || [];
   if (genres.length === 0) {
@@ -228,7 +265,7 @@ function transformToMediaCatalog(anime, mapping) {
       .sort((a, b) => (b.rank || 0) - (a.rank || 0))
       .map(t => t.name);
   }
-  
+
   const themes = tags
     .filter(t => t.category === 'Theme' && !t.isAdult)
     .sort((a, b) => (b.rank || 0) - (a.rank || 0))
@@ -239,15 +276,28 @@ function transformToMediaCatalog(anime, mapping) {
 
   // Cover image - prefer extraLarge
   const coverUrl = anime.coverImage?.extraLarge || anime.coverImage?.large || anime.coverImage?.medium;
-  const backdropUrl = anime.bannerImage;
+  // ANILIST NOTE: bannerImage é esparsa (ausente em ~60% das mídias).
+  // Fallback para coverImage.large como backdrop quando bannerImage não existe.
+  const backdropUrl = anime.bannerImage || anime.coverImage?.large;
 
   // Synopsis - remover tags HTML
   let synopsis = anime.description || '';
   synopsis = synopsis.replace(/<[^>]*>/g, '').trim();
   if (synopsis.length > 5000) synopsis = synopsis.substring(0, 4997) + '...';
 
-  // Determinar media_type
-  const mediaType = FORMAT_MAP[anime.format] || 'anime';
+  // Determinar media_type:
+  // 1) Primeiro tenta format (mais específico: TV, MOVIE, MANGA, ONE_SHOT...)
+  // 2) Depois tenta type (ANIME, MANGA, NOVEL, VISUAL_NOVEL...) via ANILIST_TYPE_MAP
+  // 3) Fallback seguro baseado no type conhecido
+  let mediaType;
+  if (anime.format && FORMAT_MAP[anime.format]) {
+    mediaType = FORMAT_MAP[anime.format];
+  } else if (anime.type && ANILIST_TYPE_MAP[anime.type]) {
+    mediaType = ANILIST_TYPE_MAP[anime.type];
+  } else {
+    // Fallback defensivo — nunca deve ocorrer com os enums conhecidos
+    mediaType = 'anime';
+  }
 
   // Títulos
   const titleDefault = anime.title?.romaji || anime.title?.english || anime.title?.native || 'Sem título';
@@ -261,44 +311,44 @@ function transformToMediaCatalog(anime, mapping) {
     anilist_id: anime.id,
     mal_id: anime.idMal || mapping.mal_id || null,
     kitsu_id: mapping.kitsu_id || null,
-    
+
     // Tipo
     media_type: mediaType,
-    
+
     // Títulos
     title_default: titleDefault,
     title_romaji: titleRomaji,
     title_english: titleEnglish,
     title_native: titleNative,
     title_ptbr: titlePtbr,
-    
+
     // Metadados
     synopsis: synopsis || null,
     cover_url: coverUrl,
     backdrop_url: backdropUrl,
     release_year: startYear || null,
     release_status: STATUS_MAP[anime.status] || 'finished',
-    
+
     // Contagem
     total_episodes: anime.episodes || 0,
-    total_chapters: 0,
-    total_volumes: 0,
+    total_chapters: anime.chapters || null,
+    total_volumes: anime.volumes || null,
     duration_minutes: anime.duration || null,
     episode_duration_minutes: anime.duration || null,
-    
+
     // Classificação
     age_rating_br: 'L', // Seria necessário mapear de tags/ratings externos
     is_adult: anime.isAdult || false,
     prestige_badge: 'none',
-    
+
     // Tags
     genres: genres,
     themes: themes,
     studios: studios,
-    
+
     // Score
     user_score_global: userScoreGlobal ? parseFloat(userScoreGlobal) : null,
-    
+
     updated_at: new Date().toISOString()
   };
 }
