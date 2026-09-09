@@ -21,7 +21,11 @@ const ANILIST_URL = 'https://graphql.anilist.co';
 const REQUEST_DELAY_MS = Math.ceil(60000 / ANILIST_RATE_LIMIT); // ~1000ms entre requests
 const MAX_RETRIES = 5;
 const MAX_CONCURRENT = 1;       // APENAS 1 request por vez para garantir rate limit
-const BATCH_DELAY_MS = 2000;    // Delay extra entre lotes
+const BATCH_DELAY_MS = 2000;    // Delay extra entre lotes (usado no loop de upsert em enrich())
+
+// Credenciais (validadas no início de enrich)
+const ANILIST_CLIENT_ID = process.env.ANILIST_CLIENT_ID;
+const ANILIST_CLIENT_SECRET = process.env.ANILIST_CLIENT_SECRET;
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -168,16 +172,22 @@ function makeGraphQLRequest(query, variables) {
     const data = JSON.stringify({ query, variables });
     const parsed = new URL(ANILIST_URL);
     
+    const headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Content-Length': Buffer.byteLength(data),
+      'User-Agent': 'HUBBLE/1.0 (enrichment script)'
+    };
+    // AniList exige OAuth2 via headers X-Anilist-Client-ID / X-Anilist-Client-Secret
+    // quando o GraphQL API client está registrado. Sem eles, a API pode retornar 403.
+    if (ANILIST_CLIENT_ID) headers['X-Anilist-Client-ID'] = ANILIST_CLIENT_ID;
+    if (ANILIST_CLIENT_SECRET) headers['X-Anilist-Client-Secret'] = ANILIST_CLIENT_SECRET;
+
     const options = {
       hostname: parsed.hostname,
       path: parsed.pathname,
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Content-Length': Buffer.byteLength(data),
-        'User-Agent': 'HUBBLE/1.0 (enrichment script)'
-      }
+      headers
     };
 
     const req = https.request(options, (res) => {
@@ -197,6 +207,9 @@ function makeGraphQLRequest(query, variables) {
           }
         } else if (res.statusCode === 429) {
           reject(new Error('RATE_LIMIT'));
+        } else if (res.statusCode === 403 || res.statusCode === 503) {
+          // 403 "instabilidade severa" / 503 manutenção — tratar como retry
+          reject(new Error('SERVICE_UNAVAILABLE'));
         } else {
           reject(new Error(`HTTP ${res.statusCode}: ${body}`));
         }
@@ -221,8 +234,11 @@ async function fetchWithRetry(anilistId, attempt = 1) {
       await new Promise(r => setTimeout(r, waitMs));
       return fetchWithRetry(anilistId, attempt + 1);
     }
-    if (attempt < MAX_RETRIES && (err.message.includes('ECONN') || err.message.includes('ETIMEDOUT') || err.message.includes('500'))) {
-      const waitMs = 1000 * Math.pow(2, attempt);
+    // 403 "instabilidade severa" / 503 manutenção → tratar como temporário
+    const isRetryable = err.message.includes('ECONN') || err.message.includes('ETIMEDOUT')
+      || err.message.includes('500') || err.message === 'SERVICE_UNAVAILABLE';
+    if (attempt < MAX_RETRIES && isRetryable) {
+      const waitMs = Math.min(1000 * Math.pow(2, attempt), 30000);
       console.log(`[RETRY] AniList ${anilistId} - ${err.message} - aguardando ${waitMs}ms (tentativa ${attempt}/${MAX_RETRIES})`);
       await new Promise(r => setTimeout(r, waitMs));
       return fetchWithRetry(anilistId, attempt + 1);
@@ -331,8 +347,8 @@ function transformToMediaCatalog(anime, mapping) {
 
     // Contagem
     total_episodes: anime.episodes || 0,
-    total_chapters: anime.chapters || null,
-    total_volumes: anime.volumes || null,
+    total_chapters: anime.chapters || 0,
+    total_volumes: anime.volumes || 0,
     duration_minutes: anime.duration || null,
     episode_duration_minutes: anime.duration || null,
 
@@ -544,6 +560,10 @@ async function enrich() {
 
 // Verificar credenciais e executar
 if (process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.NEXT_PUBLIC_SUPABASE_URL) {
+  if (!ANILIST_CLIENT_ID || !ANILIST_CLIENT_SECRET) {
+    console.error('❌ Credenciais AniList ausentes. Defina ANILIST_CLIENT_ID e ANILIST_CLIENT_SECRET no .env.local');
+    process.exit(1);
+  }
   enrich().catch(console.error);
 } else {
   console.error('❌ Variáveis de ambiente não configuradas (SUPABASE_SERVICE_ROLE_KEY, NEXT_PUBLIC_SUPABASE_URL)');

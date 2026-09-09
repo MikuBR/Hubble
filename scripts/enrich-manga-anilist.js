@@ -116,18 +116,22 @@ function makeGraphQLRequest(query, variables) {
     const data = JSON.stringify({ query, variables });
     const parsed = new URL(ANILIST_URL);
 
+    const clientId = process.env.ANILIST_CLIENT_ID;
+    const clientSecret = process.env.ANILIST_CLIENT_SECRET;
+    const headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Content-Length': Buffer.byteLength(data),
+      'User-Agent': 'HUBBLE/1.0 (manga enrichment)',
+    };
+    if (clientId) headers['X-Anilist-Client-ID'] = clientId;
+    if (clientSecret) headers['X-Anilist-Client-Secret'] = clientSecret;
+
     const options = {
       hostname: parsed.hostname,
       path: parsed.pathname,
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Content-Length': Buffer.byteLength(data),
-        'User-Agent': 'HUBBLE/1.0 (manga enrichment)',
-        'X-Anilist-Client-ID': process.env.ANILIST_CLIENT_ID,
-        'X-Anilist-Client-Secret': process.env.ANILIST_CLIENT_SECRET
-      }
+      headers,
     };
 
     const req = https.request(options, (res) => {
@@ -147,6 +151,9 @@ function makeGraphQLRequest(query, variables) {
           }
         } else if (res.statusCode === 429) {
           reject(new Error('RATE_LIMIT'));
+        } else if (res.statusCode === 403 || res.statusCode === 503) {
+          // 403 "instabilidade severa" / 503 manutenção — tratar como retry
+          reject(new Error('SERVICE_UNAVAILABLE'));
         } else {
           reject(new Error(`HTTP ${res.statusCode}: ${body}`));
         }
@@ -176,8 +183,11 @@ async function fetchPage(targetKey, page, attempt = 1) {
       await new Promise((r) => setTimeout(r, waitMs));
       return fetchPage(targetKey, page, attempt + 1);
     }
-    if (attempt < MAX_RETRIES && (err.message.includes('ECONN') || err.message.includes('ETIMEDOUT') || err.message.includes('500'))) {
-      const waitMs = 1000 * Math.pow(2, attempt);
+    // 403 "instabilidade severa" / 503 manutenção → tratar como temporário
+    const isRetryable = err.message.includes('ECONN') || err.message.includes('ETIMEDOUT')
+      || err.message.includes('500') || err.message === 'SERVICE_UNAVAILABLE';
+    if (attempt < MAX_RETRIES && isRetryable) {
+      const waitMs = Math.min(1000 * Math.pow(2, attempt), 30000);
       console.log(`[RETRY] ${targetKey}/${cfg.country} page ${page} — ${err.message} — aguardando ${waitMs}ms (tentativa ${attempt}/${MAX_RETRIES})`);
       await new Promise((r) => setTimeout(r, waitMs));
       return fetchPage(targetKey, page, attempt + 1);
@@ -190,11 +200,11 @@ async function fetchPage(targetKey, page, attempt = 1) {
 function transformToMediaCatalog(media, targetKey) {
   if (!media) return null;
 
-  // Studios: AniList retorna publishing companies via studios.nodes para manga
+  // Studios: para MANGA, AniList retorna editoras (Kodansha, Shueisha, etc.)
+  // em studios.nodes. isAnimationStudio=false para editoras, então NÃO filtrar
+  // por isAnimationStudio — senão a lista fica vazia.
   const studios =
-    media.studios?.nodes
-      ?.filter((s) => s.isAnimationStudio)
-      ?.map((s) => s.name) || [];
+    media.studios?.nodes?.map((s) => s.name) || [];
 
   // Genres
   const genres = media.genres || [];
@@ -255,13 +265,15 @@ function transformToMediaCatalog(media, targetKey) {
     episode_duration_minutes: null,
 
     // Classificação
-    age_rating_br: media.isAdult ? 'R' : 'L',
+    // NOTE: age_rating_br_enum só aceita 'L','10','12','14','16','18'.
+    // AniList isAdult=true → '18' (não há 'R' no enum); isAdult=false → 'L'.
+    // isAdult é heurística fraca — AniList usa classificação própria por país.
+    age_rating_br: media.isAdult ? '18' : 'L',
     is_adult: media.isAdult || false,
-    prestige_badge: media.averageScore >= 80 ? 'premium' : 'none',
-    popularity: media.popularity || null,
-    mean_score: media.meanScore || null,
-    source: media.source || null,
-    format: media.format || null,
+    // NOTE: prestige_badge_enum só aceita 'none','nominee','winner'.
+    // averageScore é só popularidade de ranking — não é prêmio real.
+    // Sem dados da tabela `awards`, sempre 'none'.
+    prestige_badge: 'none',
 
     // Tags
     genres: genres,
@@ -269,6 +281,7 @@ function transformToMediaCatalog(media, targetKey) {
     studios: studios,
 
     // Score
+    // NOTE: média dos usuários (averageScore 0-100 → 0-10)
     user_score_global: userScoreGlobal,
 
     updated_at: new Date().toISOString()
@@ -353,14 +366,15 @@ async function enrich() {
   console.log(`   Estratégia: Page.media(type: MANGA, countryOfOrigin: JP/KR/CN)`);
 
   // Criar log de ingestão
+  // NOTE: ingestion_logs não tem coluna 'metadata' no schema (migrations/20260816000001).
+  // Alvos ficam em error_message durante 'running' — removido ao finalizar.
   const { data: logData, error: logErr } = await supabase
     .from('ingestion_logs')
     .insert({
       source: 'anilist_manga_discovery',
       status: 'running',
       records_processed: 0,
-      records_inserted: 0,
-      metadata: { targets: TARGETS }
+      records_inserted: 0
     })
     .select()
     .single();

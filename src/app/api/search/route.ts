@@ -16,7 +16,7 @@ const SearchQuerySchema = z.object({
  * Busca híbrida local-first:
  * 1. pg_trgm no media_catalog (instantâneo, offline)
  * 2. Se HIT → retorna
- * 3. Se MISS → fallback APIs externas (TMDB, AniList) - opcional
+ * 3. Se MISS → fallback APIs externos (TMDB, AniList) - opcional
  */
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -39,24 +39,29 @@ export async function GET(request: NextRequest) {
 
   const { q, type, limit, offset } = parseResult.data;
 
-  // Pegar preferências de idioma do usuário (se logado)
+  // Pegar preferências do usuário (se logado) — única consulta ao perfil
   const { data: { user } } = await supabase.auth.getUser();
   let westernPref: 'pt-BR' | 'en' | 'es' = 'pt-BR';
   let orientalPref: 'pt-BR' | 'en' | 'romaji' | 'native' = 'romaji';
+  let enableNsfwFilter = true; // padrão seguro: filtra para não logados e usuários sem perfil
 
   if (user) {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('preferred_language_western, preferred_language_oriental')
+      .select('preferred_language_western, preferred_language_oriental, enable_nsfw_filter')
       .eq('id', user.id)
       .single();
     if (profile) {
       westernPref = profile.preferred_language_western;
       orientalPref = profile.preferred_language_oriental;
+      enableNsfwFilter = (profile as { enable_nsfw_filter?: boolean }).enable_nsfw_filter ?? true;
     }
   }
 
   // 1. Busca local com pg_trgm
+  // Fetch limit+1 para detectar hasMore corretamente (evita falso-positivo
+  // quando o total é múltiplo exato de limit).
+  const fetchLimit = limit + 1;
   let query = supabase
     .from('media_catalog')
     .select(`
@@ -87,27 +92,18 @@ export async function GET(request: NextRequest) {
     `)
     .textSearch('title_default', q, {
       type: 'websearch',
-      config: 'portuguese'
+      config: 'portuguese',
     })
-    .range(offset, offset + limit - 1)
-    .order('user_score_global', { ascending: false, nullsLast: true });
+    .range(offset, offset + fetchLimit - 1)
+    .order('user_score_global', { ascending: false })
+    .order('id', { ascending: true });
 
   if (type && type !== 'all') {
     query = query.eq('media_type', type);
   }
 
-  // Filtrar NSFW se usuário não quiser ver
-  if (user) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('enable_nsfw_filter')
-      .eq('id', user.id)
-      .single();
-    if (profile?.enable_nsfw_filter) {
-      query = query.eq('is_adult', false);
-    }
-  } else {
-    // Não logado = filtro NSFW on por padrão
+  // Filtrar NSFW
+  if (enableNsfwFilter) {
     query = query.eq('is_adult', false);
   }
 
@@ -139,11 +135,11 @@ export async function GET(request: NextRequest) {
   });
 
   return NextResponse.json({
-    results: enrichedResults,
+    results: enrichedResults.slice(0, limit),
     pagination: {
       offset,
       limit,
-      hasMore: enrichedResults.length === limit,
+      hasMore: localResults && localResults.length > limit,
     },
     source: 'local',
   });
