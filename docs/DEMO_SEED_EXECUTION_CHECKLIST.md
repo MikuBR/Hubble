@@ -13,6 +13,52 @@
 
 ---
 
+## Blocos externos atuais (impedem execução real, não implementação)
+
+O seed e os scripts de enriquecimento já estão implementados, revisados e
+commitados (`94a6b7f`). Nada pode ser executado contra banco ou API enquanto
+estes blocos não forem resolvidos:
+
+**B1 — Supabase deletado (bloqueia tudo que toca banco)**
+- Projeto Supabase apagado. DNS não resolve (`NXDOMAIN`).
+- `.env.local` tem `NEXT_PUBLIC_SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY`,
+  mas apontam para projeto inexistente.
+- Afeta: seed de demonstração, enriquecimento AniList/TMDb, validação de
+  busca E2E, teste de signup com email provider.
+- Resolver: recriar ou restaurar o projeto no Supabase e atualizar
+  `.env.local` com as novas credenciais (`NEXT_PUBLIC_SUPABASE_URL`,
+  `SUPABASE_SERVICE_ROLE_KEY`). O `SUPABASE_SERVICE_ROLE_KEY` é gerado na
+  recriação.
+
+**B2 — AniList retornando 403 (bloqueia enriquecimento via AniList)**
+- API AniList respondendo `403 "instabilidade severa"` em testes de saúde
+  (`curl`).
+- Mesmo com `ANILIST_CLIENT_ID` e `ANILIST_CLIENT_SECRET` no `.env.local`,
+  a API não atende.
+- Afeta: `enrich-from-anilist.js`, `enrich-manga-anilist.js` — não podem
+  rodar até a API voltar.
+- Resolver: aguardar retorno da AniList (monitorar status.anilist.co).
+  Enquanto isso, usar fallback TMDB (independente de AniList) conforme
+  `docs/ANILIST_FALLBACK_PLAN.md`.
+
+**B3 — Credenciais AniList ausentes (.env.local)**
+- `ANILIST_CLIENT_ID` e `ANILIST_CLIENT_SECRET` não estão presentes no
+  `.env.local`.
+- Registrar app em anilist.co/settings/developer e adicionar os valores ao
+  `.env.local`.
+- Nota: mesmo com credenciais, o B2 (API 403) prevalece até a AniList voltar.
+
+**Resumo de dependência:**
+```
+Backend real (DB + API) ← B1 (Supabase existe) AND B2 (AniList responde)
+Enriquecimento AniList   ← B1 AND B2 AND B3 (credenciais presentes)
+Enriquecimento TMDb      ← B1 apenas (independente de AniList)
+Seed de demonstração      ← B1 apenas (roda offline com --dry-run; insert
+                            real precisa de DB)
+```
+
+---
+
 ## Fase 0 — Pré-requisitos
 
 ```bash

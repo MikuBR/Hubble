@@ -15,6 +15,80 @@
 
 ---
 
+## Blocos externos atuais (impedem execução real, não implementação)
+
+Os scripts de enriquecimento (`enrich-from-anilist.js`, `enrich-manga-anilist.js`)
+já estão implementados, revisados e commitados (`94a6b7f`). Não podem rodar
+enquanto estes blocos não forem resolvidos:
+
+**B1 — Supabase deletado (bloqueia tudo que toca banco)**
+- Projeto Supabase apagado. DNS não resolve (`NXDOMAIN`).
+- `.env.local` tem `NEXT_PUBLIC_SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY`,
+  mas apontam para projeto inexistente.
+- Afeta: todos os scripts que escrevem em `media_catalog` ou leem/escrevem
+  no banco (enriquecimento, busca, seed). O TMDB precisa escrever via
+  `service_role` — sem projeto, não funciona.
+- Resolver: recriar ou restaurar o projeto no Supabase e atualizar
+  `.env.local` com as novas credenciais.
+
+**B2 — AniList retornando 403 (bloqueia enriquecimento via AniList)**
+- API AniList respondendo `403 "instabilidade severa"`.
+- Mesmo com credenciais no `.env.local`, a API não atende.
+- Afeta diretamente: `enrich-from-anilist.js` e `enrich-manga-anilist.js`.
+- Resolver: aguardar retorno da AniList (monitorar status.anilist.co + curl
+  de saúde). Enquanto isso, usar TMDB conforme a seção "Fallback TMDB" abaixo.
+
+**B3 — Credenciais AniList ausentes (.env.local)**
+- `ANILIST_CLIENT_ID` e `ANILIST_CLIENT_SECRET` não estão presentes no
+  `.env.local`.
+- Registrar app em anilist.co/settings/developer quando a API voltar.
+- Mesmo com credenciais, o B2 prevails até a AniList responder.
+
+**Dependências:**
+```
+Enriquecimento AniList ← B1 AND B2 AND B3
+Enriquecimento TMDB    ← B1 apenas (independente de AniList)
+```
+
+---
+
+## Blocos externos atuais (impedem execução real, não implementação)
+
+Os scripts de enriquecimento (`enrich-from-anilist.js`, `enrich-manga-anilist.js`)
+já estão implementados, revisados e commitados (`94a6b7f`). Não podem rodar
+enquanto estes blocos não forem resolvidos:
+
+**B1 — Supabase deletado (bloqueia tudo que toca banco)**
+- Projeto Supabase apagado. DNS não resolve (`NXDOMAIN`).
+- `.env.local` tem `NEXT_PUBLIC_SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY`,
+  mas apontam para projeto inexistente.
+- Afeta: todos os scripts que escrevem em `media_catalog` ou leem/escrevem
+  no banco (enriquecimento, busca, seed). O TMDB precisa escrever via
+  `service_role` — sem projeto, não funciona.
+- Resolver: recriar ou restaurar o projeto no Supabase e atualizar
+  `.env.local` com as novas credenciais.
+
+**B2 — AniList retornando 403 (bloqueia enriquecimento via AniList)**
+- API AniList respondendo `403 "instabilidade severa"`.
+- Mesmo com credenciais no `.env.local`, a API não atende.
+- Afeta diretamente: `enric-from-anilist.js` e `enrich-manga-anilist.js`.
+- Resolver: aguardar retorno da AniList (monitorar status.anilist.co + curl
+  de saúde). Enquanto isso, usar TMDB conforme a seção "Fallback TMDB" abaixo.
+
+**B3 — Credenciais AniList ausentes (.env.local)**
+- `ANILIST_CLIENT_ID` e `ANILIST_CLIENT_SECRET` não estão presentes no
+  `.env.local`.
+- Registrar app em anilist.co/settings/developer quando a API voltar.
+- Mesmo com credenciais, o B2 prevalece até a AniList responder.
+
+**Dependências:**
+```
+Enriquecimento AniList ← B1 AND B2 AND B3
+Enriquecimento TMDB    ← B1 apenas (independente de AniList)
+```
+
+---
+
 ## 2. Monitoramento do status AniList
 
 | Fonte | URL | Frequência sugerida |

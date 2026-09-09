@@ -777,8 +777,54 @@ Demo video curto:
 | Email provider no Supabase Dashboard | ❌ Desabilitado | Bloqueia signup real (#4) |
 | Extensão `pg_trgm` no Supabase | ✅ Ativada | Índice `idx_media_trgm` existe |
 | Cadastro no AniList Developer | ❌ Não feito | Necessário para obter `ANILIST_CLIENT_*` |
-| Cadastro no TMDB | ❌ Não feito | Necessário para obter `TMDB_API_KEY` |
-| Vercel para deploy | ❌ Não configurado | Bloqueia #20 (deploy público) |
+|| Cadastro no TMDB | ❌ Não feito | Necessário para obter `TMDB_API_KEY` |
+|| Vercel para deploy | ❌ Não configurado | Bloqueia #20 (deploy público) |
+
+---
+
+## Blocos Externos Atuais (impedem execução real, não implementação)
+
+Todos os builders (#4, #5, #6, #24) foram entregues, revisados pelo validador
+(deleg_b8dc17c6) e QA cético (deleg_537c1102), e as correções críticas foram
+commitadas em `94a6b7f`. Os scripts e docs estão prontos no workspace. Não há
+execução real possível enquanto estes blocos não forem removidos:
+
+**BE1 — Supabase deletado (bloqueia tudo que toca banco)**
+- Projeto Supabase apagado. DNS não resolve (`NXDOMAIN`).
+- `.env.local` tem `NEXT_PUBLIC_SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY`,
+  mas apontam para projeto inexistente.
+- Afeta: seed de demonstração (#24), enriquecimento AniList/TMDb (#5), busca
+  E2E (#6), signup com email provider (#4), qualquer feature dependente de DB.
+- Resolver: recriar ou restaurar o projeto no Supabase e atualizar
+  `.env.local` com as novas credenciais. O `SUPABASE_SERVICE_ROLE_KEY` é
+  gerado na recriação.
+
+**BE2 — AniList retornando 403 (bloqueia enriquecimento via AniList)**
+- API AniList respondendo `403 "instabilidade severa"` em testes de saúde
+  (`curl`).
+- Mesmo com `ANILIST_CLIENT_ID` e `ANILIST_CLIENT_SECRET` no `.env.local`,
+  a API não atende.
+- Afeta: `enrich-from-anilist.js`, `enrich-manga-anilist.js` — não podem
+  rodar até a API voltar.
+- Resolver: aguardar retorno da AniList (monitorar status.anilist.co). Enquanto
+  isso, usar fallback TMDB conforme `docs/ANILIST_FALLBACK_PLAN.md`
+  (independente de AniList).
+
+**BE3 — Credenciais AniList ausentes (.env.local)**
+- `ANILIST_CLIENT_ID` e `ANILIST_CLIENT_SECRET` não estão presentes no
+  `.env.local`.
+- Registrar app em anilist.co/settings/developer e adicionar os valores.
+- Nota: mesmo com credenciais, o BE2 (API 403) prevalece até a AniList voltar.
+
+**Resumo de dependência:**
+```
+Backend real (DB + API)     ← BE1 AND BE2
+Enriquecimento AniList       ← BE1 AND BE2 AND BE3
+Enriquecimento TMDB          ← BE1 apenas (independente de AniList)
+Seed de demonstração          ← BE1 apenas (roda offline com --dry-run;
+                               insert real precisa de DB)
+Signup + email provider (#4) ← BE1 apenas (configuração no dashboard)
+```
 
 ---
 
