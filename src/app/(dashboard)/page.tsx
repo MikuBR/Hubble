@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { BackdropHero, Carousel } from "@/shared/ui";
+import { BackdropHero, Carousel, StreamingCard } from "@/shared/ui";
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -72,7 +72,7 @@ export default async function HomePage() {
           <Carousel count={continueItems.length}>
             {continueItems.map((m) => (
               <Link key={m.id} href={`/media/${m.id}`} className="flex-shrink-0 no-underline">
-                <div>{/* StreamingCard usage here */}</div>
+                <StreamingCard media={m} variant="default" />
               </Link>
             ))}
           </Carousel>
@@ -85,19 +85,19 @@ export default async function HomePage() {
           <div className="flex items-center justify-between mb-4 px-2">
             <h2 className="text-xl font-semibold text-white flex items-center gap-2">
               <span>🌌</span> Novos Horizontes
-           </h2>
+            </h2>
             <Link href="/recommendations" className="text-sm text-zinc-400 hover:text-indigo-400 transition-colors">
               Explorar →
-           </Link>
-         </div>
+            </Link>
+          </div>
           <Carousel count={recommendations.length}>
             {recommendations.map((r: any) => (
               <Link key={r.id} href={`/media/${r.id}`} className="flex-shrink-0 no-underline">
-                <div>{/* StreamingCard usage here */}</div>
+                <StreamingCard media={r} variant="default" />
               </Link>
             ))}
           </Carousel>
-       </section>
+        </section>
       )}
 
       {/* Empty state */}

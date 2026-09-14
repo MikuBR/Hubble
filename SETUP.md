@@ -204,9 +204,22 @@ supabase/
 scripts/
 ├── ingest-aodb.js         # AODB → offline_anime_mapping
 ├── enrich-from-anilist.js # AniList → media_catalog
-└── test-e2e-flow-fixed.js # Validação E2E manual
+├── enrich-manga-anilist.js
+├── enrich-tmdb.js         # TMDB → media_catalog (principal: 200 filmes + 200 séries, detail calls)
+├── enrich-from-tmdb.mjs   # TMDB → media_catalog (versão legacy: 80 filmes + 50 séries, sem detail)
+├── enrich-titles-i18n.js
+├── seed-demo.cjs          # Seed de demonstração (#24)
+├── validate-search.cjs
+├── validate-signup.ts
+└── test-e2e-flow*.js      # Validação E2E manual
 docs/
-└── RECOMMENDATION_ALGORITHM_RESEARCH.md
+├── README.md                                  # Índice + convenções
+├── archive/                                   # Snapshots históricos
+│   └── HUBBLE_CONSOLIDATED_ARCHIVE.md
+├── reviews/                                   # Relatórios de revisão/QA
+│   ├── QA_CRITICO_REPORT.md
+│   └── QA_CRITICO_REPORT_ADICIONAL.md
+└── RECOMMENDATION_ALGORITHM_RESEARCH.md, RUN_B0.md, *.md
 ```
 
 ---

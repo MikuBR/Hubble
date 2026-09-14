@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/shared/ui";
+import { AlertDialog } from "@/shared/ui/Modal";
 import { useToast } from "@/shared/ui/Toast";
 import type { Profile } from "@/types";
 
@@ -454,6 +455,8 @@ function LanguageTab({ formData, setFormData }: { formData: Partial<Profile>; se
 }
 
 function PrivacyTab({ formData, setFormData }: { formData: Partial<Profile>; setFormData: React.Dispatch<React.SetStateAction<Partial<Profile>>> }) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
   return (
     <div className="space-y-6">
       <h2 className="text-lg font-semibold text-white">Privacidade</h2>
@@ -491,9 +494,22 @@ function PrivacyTab({ formData, setFormData }: { formData: Partial<Profile>; set
         <p className="text-zinc-400 text-sm mb-4">
           Estas ações são irreversíveis. Seus dados serão permanentemente deletados.
         </p>
-        <Button variant="danger" onClick={() => confirm("Tem certeza? Esta ação não pode ser desfeita.") && alert("Implementar exclusão de conta")}>
+        <Button variant="danger" onClick={() => setConfirmOpen(true)}>
           Excluir Minha Conta
         </Button>
+        <AlertDialog
+          open={confirmOpen}
+          onClose={() => setConfirmOpen(false)}
+          onConfirm={() => {
+            // TODO: implementar exclusão de conta (chamar API de delete).
+            setConfirmOpen(false);
+          }}
+          title="Excluir minha conta?"
+          description="Tem certeza? Esta ação não pode ser desfeita. Todos os seus dados serão permanentemente deletados."
+          confirmText="Excluir"
+          cancelText="Cancelar"
+          variant="danger"
+        />
       </div>
     </div>
   );
