@@ -2,7 +2,9 @@
 /**
  * Script: validate-search.cjs
  *
- * Valida busca real em /api/search após enriquecimento.
+ * Testa conectividade com Supabase + AniList GraphQL público.
+ * Útil como smoke test pós-enriquecimento para confirmar que o banco
+ * está acessível e as credenciais funcionam.
  *
  * Uso:
  *   node scripts/validate-search.cjs [termo]
@@ -56,6 +58,12 @@ async function main() {
 
   const { count } = await supabase.from('media_catalog').select('*', { count: 'exact', head: true });
   console.log(`📊 media_catalog count: ${count ?? 0}`);
+
+  // Fail fast se o banco estiver vazio — executar builders #5/#6 primeiro
+  if ((count ?? 0) === 0) {
+    console.error('❌ media_catalog está vazio. Execute os scripts de enriquecimento antes de validar.');
+    process.exit(1);
+  }
 
   const query = `query Search($search: String) { Page(page: 1, perPage: 3) { media(search: $search, type: ANIME) { id title { romaji english } } } }`;
   const data = await httpsPost('https://graphql.anilist.co', { query, variables: { search: term } });
