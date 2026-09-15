@@ -1,0 +1,34 @@
+{
+  "repo": "MikuBR/Hubble",
+  "date": "2026-09-15",
+  "tsc": {
+    "before": 24,
+    "after": 0,
+    "vitest": "52/52",
+    "lint": {
+      "new_errors": 0,
+      "existing": [
+        "src/shared/ui/TrailerModal.tsx:65:40 react-hooks/exhaustive-deps warning",
+        "src/widgets/header.tsx:3:10 no-unused-vars error (createClient)",
+        "src/widgets/header.tsx:21:11 no-unused-vars error (addToast)",
+        "src/widgets/header.tsx:104:11 no-img-element warning"
+      ]
+    }
+  },
+  "files_modified": [
+    "src/app/api/insights/[id]/route.ts",
+    "src/app/api/progress/[id]/route.ts",
+    "src/app/api/recommendations/horizons/route.ts",
+    "src/app/api/recommendations/route.ts",
+    "src/app/api/search/route.ts"
+  ],
+  "strategy": "type assertions com builders tipados via `as unknown as {...}` para quebrar cadeia never[]",
+  "justification": "Supabase deletado (NXDOMAIN), regeneração de tipos bloqueada",
+  "documentation": "rastreado em QA_CRITICO_REPORT.md",
+  "blocked_by_infra": ["Supabase deletado — impede seed-demo, E2E, validação real de busca"],
+  "needs_user_decision": [
+    "Restaurar projeto Supabase (recriar ou recuperar) para desbloquear validação real",
+    "Decidir se remove `ignoreBuildErrors: true` agora (já zera TSC) ou espera infra",
+    "Issue #24: implementar botão de reset em settings/page.tsx"
+  ]
+}
