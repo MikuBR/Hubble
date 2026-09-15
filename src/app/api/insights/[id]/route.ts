@@ -37,9 +37,7 @@ export async function PATCH(
   // requires the Supabase project to be online — it is currently NXDOMAIN.
   type UpsertResult = UserMediaProgress & { private_insights?: string };
 
-  // Cast via `any` to bypass `never[]` inference from unresolved Relationships
-  // in database.types.ts (tracked in QA_CRITICO_REPORT.md).
-  const { data, error } = await ((supabase as any)
+  const { data, error } = await supabase
     .from("user_media_progress")
     .upsert(
       {
@@ -52,7 +50,7 @@ export async function PATCH(
       { onConflict: "user_id,media_id" }
     )
     .select()
-    .single()) as { data: UserMediaProgress & { private_insights?: string } | null; error: Error | null };
+    .single() as { data: UserMediaProgress & { private_insights?: string } | null; error: Error | null };
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

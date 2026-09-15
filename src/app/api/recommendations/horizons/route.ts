@@ -11,10 +11,11 @@ export async function GET(request: NextRequest) {
 
   // Novos Horizontes: gêneros que o user NÃO tem afinidade
   // (score = 0 ou não existe na tabela user_tag_preferences)
-  const { data, error } = await supabase.rpc("get_horizons", {
-    p_user_id: user.id,
-    p_limit: 20,
-  });
+  // RPC args typed as `undefined` due to unresolved Relationships in db types.
+  const { data, error } = await supabase.rpc(
+    "get_horizons",
+    { p_user_id: user.id, p_limit: 20 } as unknown as Parameters<typeof supabase.rpc>[1],
+  );
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -136,7 +136,6 @@ export function BackdropHero({ media, href }: BackdropHeroProps) {
           >
             <button
               onClick={(e) => { e.stopPropagation(); window.location.href = href ?? `/media/${media.id}`; }}
-              aria-label={`Assistir agora ${title}`}
               className={cn(
                 "flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-base",
                 "bg-white text-zinc-950 hover:bg-white/90",

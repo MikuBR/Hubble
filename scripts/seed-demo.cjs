@@ -513,7 +513,7 @@ async function openIngestionLog(sb) {
   return data;
 }
 
-async function closeIngestionLog(sb, logId, status, processed, inserted, updated, error) {
+async function closeIngestionLog(sb, logId, status, processed, inserted, updated, errorMsg) {
   if (!logId) return;
   const { error: e } = await sb
     .from('ingestion_logs')
@@ -523,7 +523,7 @@ async function closeIngestionLog(sb, logId, status, processed, inserted, updated
       records_processed: processed,
       records_inserted: inserted,
       records_updated: updated,
-      error_message: error ? String(error).slice(0, 2000) : null,
+      error_message: errorMsg ? String(errorMsg).slice(0, 2000) : null,
     })
     .eq('id', logId);
   if (e) console.warn('⚠️  fechamento de ingestion_logs falhou: %s', e.message.slice(0, 120));

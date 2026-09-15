@@ -1,5 +1,5 @@
 import { createClient as createBaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/lib/database.types";
+import type { Database } from "@/types/database.types";
 
 /**
  * Cliente Supabase com SERVICE ROLE (bypass RLS).

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { cn, debounce } from "@/lib/utils/cn";
 import { Button } from "./Button";
 import { useToast } from "./Toast";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { type Components as ReactMarkdownComponents } from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 
 interface InsightsEditorProps {
@@ -88,20 +88,19 @@ export function InsightsEditor({
     setIsEditing(false);
   };
 
-  const SpoilerText = ({ children }: { children: string }) => (
+  const SpoilerText = ({ children }: { children?: React.ReactNode }) => (
     <span className="bg-zinc-700 text-zinc-700 rounded px-1 transition-all duration-200 hover:bg-transparent hover:text-white">
       {children}
     </span>
   );
 
   const markdownComponents = {
-    text: ({ value }: { value: string }) => {
-      if (isOwner) {
+    text: ({ value }: { value?: string }) => {
+      if (isOwner && value) {
         return value.replace(SPOILER_REGEX, '$1');
       }
-      return (
-        <SpoilerText>{value.replace(SPOILER_REGEX, '||$1||')}</SpoilerText>
-      );
+      const processed = value?.replace(SPOILER_REGEX, '||$1||') ?? '';
+      return <SpoilerText>{processed}</SpoilerText>;
     },
   };
 
@@ -145,9 +144,9 @@ export function InsightsEditor({
           <div className="p-4 prose prose-invert max-w-none">
             <ReactMarkdown
               rehypePlugins={[rehypeSanitize]}
-              components={markdownComponents}
+              components={markdownComponents as ReactMarkdownComponents}
             >
-              {content || <p className="text-zinc-500 italic">Nenhum insight ainda...</p>}
+              {(content || <p className="text-zinc-500 italic">Nenhum insight ainda...</p>) as unknown as string}
             </ReactMarkdown>
           </div>
         )}

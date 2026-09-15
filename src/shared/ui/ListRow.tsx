@@ -6,8 +6,7 @@ import { AgeRatingBadge, AwardBadge } from "./index";
 import { Button } from "./Button";
 import { useToast } from "./Toast";
 import { Plus, ChevronDown } from "lucide-react";
-import type { MediaCatalog } from "@/types/database.types";
-import type { UserStatus } from "@/types/database.types";
+import type { MediaCatalog, UserStatus } from "@/types";
 
 interface ListRowProps {
   media: MediaCatalog & { 
@@ -173,7 +172,7 @@ export function ListRow({
               size="icon"
               variant="secondary"
               onClick={handleIncrement}
-              disabled={isPending || (totalUnits && currentUnit >= totalUnits)}
+              disabled={isPending || Boolean(totalUnits && currentUnit >= totalUnits)}
               aria-label={`Incrementar ${media.media_type === 'anime' || media.media_type === 'tv_series' ? 'episódio' : 'capítulo'}`}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -449,7 +448,7 @@ export function ReadingTable({ mediaList, onUpdate, className }: ReadingTablePro
                       size="sm"
                       variant="secondary"
                       onClick={() => handleIncrement(media.id)}
-                      disabled={isPending || (hasTotal && currentUnit >= totalUnits)}
+                      disabled={isPending || Boolean(hasTotal && currentUnit >= totalUnits)}
                       aria-label={`Incrementar ${getUnitLabel(media)}`}
                       className="whitespace-nowrap gap-1.5 px-2 py-1"
                     >

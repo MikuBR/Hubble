@@ -13,7 +13,7 @@
  * - 18: vermelho (adultos)
  */
 
-import type { AgeRatingBR } from "@/types/database.types";
+import type { AgeRatingBR } from "@/types";
 
 export interface RatingMeta {
   code: AgeRatingBR;
@@ -114,7 +114,7 @@ export const RATING_ORDER: AgeRatingBR[] = ["L", "10", "12", "14", "16", "18"];
  * Dados populados pela tabela `awards` (admin-only).
  */
 
-import type { PrestigeBadge } from "@/types/database.types";
+import type { PrestigeBadge } from "@/types";
 
 export interface PrestigeMeta {
   code: PrestigeBadge;

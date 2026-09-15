@@ -127,7 +127,7 @@ export async function GET(request: NextRequest) {
     const resolvedTitle = resolveTitle(media, langPref);
 
     return {
-      ...media,
+      ...(media as Record<string, unknown>),
       title: resolvedTitle,
       // Para UI: mostra tipo de mídia traduzido
       mediaTypeLabel: getMediaTypeLabel(media.media_type),

@@ -2,13 +2,14 @@
 
 import { cn } from "@/lib/utils/cn";
 import { getRatingMeta } from "@/lib/utils/ratings";
-import type { AgeRatingBR } from "@/types/database.types";
+import type { AgeRatingBR } from "@/types";
 
 interface AgeRatingBadgeProps {
   rating: AgeRatingBR | null | undefined;
   size?: "sm" | "md" | "lg";
   showLabel?: boolean;
   variant?: "badge" | "pill" | "minimal";
+  className?: string;
 }
 
 export function AgeRatingBadge({
@@ -16,6 +17,7 @@ export function AgeRatingBadge({
   size = "md",
   showLabel = false,
   variant = "badge",
+  className,
 }: AgeRatingBadgeProps) {
   const meta = getRatingMeta(rating);
 
@@ -29,7 +31,8 @@ export function AgeRatingBadge({
           size === "lg" && "px-3 py-1.5 text-base",
           variant === "badge" && meta.cssClass,
           variant === "pill" && `bg-[${meta.colorVar}]/20 text-[${meta.colorVar}] border border-[${meta.colorVar}]/30 rounded-full`,
-          variant === "minimal" && "text-zinc-400"
+          variant === "minimal" && "text-zinc-400",
+          className,
         )}
         title={meta.description}
       >
@@ -48,6 +51,7 @@ export function AgeRatingBadge({
         size === "lg" && "px-3 py-1.5 text-base",
         variant === "badge" && meta.cssClass,
         variant === "pill" && `bg-[${meta.colorVar}]/20 text-[${meta.colorVar}] border border-[${meta.colorVar}]/30 rounded-full`,
+        className,
       )}
       title={meta.description}
     >

@@ -21,7 +21,7 @@ const ANILIST_URL = 'https://graphql.anilist.co';
 const REQUEST_DELAY_MS = Math.ceil(60000 / ANILIST_RATE_LIMIT); // ~1000ms entre requests
 const MAX_RETRIES = 5;
 const MAX_CONCURRENT = 1;       // APENAS 1 request por vez para garantir rate limit
-const BATCH_DELAY_MS = 2000;    // Delay extra entre lotes (usado no loop de upsert em enrich())
+const BATCH_DELAY_MS = 2000;    // Delay extra entre lotes (usado inline no loop principal em enrich())
 
 // Credenciais (validadas no início de enrich)
 const ANILIST_CLIENT_ID = process.env.ANILIST_CLIENT_ID;

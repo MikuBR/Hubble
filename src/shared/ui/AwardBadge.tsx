@@ -2,18 +2,20 @@
 
 import { cn } from "@/lib/utils/cn";
 import { getPrestigeMeta } from "@/lib/utils/ratings";
-import type { PrestigeBadge } from "@/types/database.types";
+import type { PrestigeBadge } from "@/types";
 
 interface AwardBadgeProps {
   badge: PrestigeBadge | null | undefined;
   size?: "sm" | "md" | "lg";
   showLabel?: boolean;
+  className?: string;
 }
 
 export function AwardBadge({
   badge,
   size = "md",
   showLabel = false,
+  className,
 }: AwardBadgeProps) {
   const meta = getPrestigeMeta(badge);
 
@@ -27,7 +29,8 @@ export function AwardBadge({
         size === "md" && "px-2.5 py-1 text-sm",
         size === "lg" && "px-3 py-1.5 text-base",
         meta.cssClass,
-        "animate-in fade-in zoom-in-95 duration-300"
+        "animate-in fade-in zoom-in-95 duration-300",
+        className,
       )}
       title={meta.label}
     >

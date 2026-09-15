@@ -1,8 +1,7 @@
 /**
  * Re-export all database types for convenience
  */
-export type {
-  Database,
+import type {
   MediaType,
   UserStatus,
   AgeRatingBR,
@@ -10,6 +9,15 @@ export type {
   ReleaseStatus,
   Json,
 } from "./database.types";
+
+export type {
+  MediaType,
+  UserStatus,
+  AgeRatingBR,
+  PrestigeBadge,
+  ReleaseStatus,
+  Json,
+};
 
 // UI-specific types
 export interface MediaCatalog {

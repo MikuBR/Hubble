@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 
@@ -59,13 +60,14 @@ vi.mock('@/shared/ui/Toast', () => ({
 
 // Suppress console.error in tests
 const originalError = console.error;
-beforeAll(() => {
-  console.error = (...args: unknown[]) => {
-    if (args[0]?.includes?.('Warning: ReactDOM.render is no longer supported')) return;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+;(globalThis as any).beforeAll(() => {
+  console.error = ((...args: (unknown | undefined)[]) => {
+    if (args[0] && typeof args[0] === 'string' && args[0].includes?.('Warning: ReactDOM.render is no longer supported')) return;
     originalError.call(console, ...args);
-  };
+  }) as typeof console.error;
 });
-
-afterAll(() => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+;(globalThis as any).afterAll(() => {
   console.error = originalError;
 });

@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { BackdropHero, Carousel } from "@/shared/ui";
+import { BackdropHero, Carousel, StreamingCard } from "@/shared/ui";
 import type { MediaCatalog, UserMediaProgress } from "@/types";
 
 // Type assertion for Supabase relation joins: relationships are unresolved in
@@ -12,11 +12,9 @@ type WatchedMedia = UserMediaProgress & { media: MediaCatalog };
 interface HorizonsItem {
   id: string;
   title_default: string;
-  cover_url: string | null;
+  poster_url: string | null;
   backdrop_url: string | null;
   media_type: string;
-  release_year: number | null;
-  user_score_global: number | null;
 }
 
 export default async function HomePage() {
@@ -54,9 +52,12 @@ export default async function HomePage() {
 
   // Recomendações rápidas (Novos Horizontes)
   // RPC args typed as `undefined` due to unresolved Relationships in db types.
-  // Cast via `any` to bypass; would be removed once types are regenerated.
-  const recsData = (supabase as any).rpc("get_horizons", { p_user_id: user.id, p_limit: 12 });
-  const recommendations = ((recsData as { data: HorizonsItem[] | null } | null)?.data ?? []) as HorizonsItem[];
+  // Cast via explicit interface; would be removed once types are regenerated.
+  const { data: recs } = await supabase.rpc(
+    "get_horizons",
+    { p_user_id: user.id, p_limit: 12 } as unknown as Parameters<typeof supabase.rpc>[1],
+  ) as { data: HorizonsItem[] | null; error: unknown };
+  const recommendations = (recs ?? []) as HorizonsItem[];
 
   // Featured media for Backdrop Hero
   const heroMedia = recommendations[0] || continueItems[0] || null;
@@ -66,7 +67,7 @@ export default async function HomePage() {
       {/* Backdrop Hero */}
       {heroMedia ? (
         <BackdropHero
-          media={heroMedia as MediaCatalog & { title?: string }}
+          media={heroMedia as unknown as MediaCatalog & { title?: string }}
           href={`/media/${heroMedia.id}`}
         />
       ) : (
@@ -94,11 +95,11 @@ export default async function HomePage() {
           <Carousel count={continueItems.length}>
             {continueItems.map((m) => (
               <Link key={m.id} href={`/media/${m.id}`} className="flex-shrink-0 no-underline">
-                <div>{/* StreamingCard usage here */}</div>
+                <StreamingCard media={m} />
               </Link>
             ))}
           </Carousel>
-       </section>
+        </section>
       )}
 
       {/* Novos Horizontes */}
@@ -107,19 +108,19 @@ export default async function HomePage() {
           <div className="flex items-center justify-between mb-4 px-2">
             <h2 className="text-xl font-semibold text-white flex items-center gap-2">
               <span>🌌</span> Novos Horizontes
-           </h2>
+            </h2>
             <Link href="/recommendations" className="text-sm text-zinc-400 hover:text-indigo-400 transition-colors">
               Explorar →
-           </Link>
-         </div>
+            </Link>
+          </div>
           <Carousel count={recommendations.length}>
-            {recommendations.map((r: any) => (
+            {recommendations.map((r) => (
               <Link key={r.id} href={`/media/${r.id}`} className="flex-shrink-0 no-underline">
-                <div>{/* StreamingCard usage here */}</div>
+                <StreamingCard media={r as unknown as MediaCatalog} />
               </Link>
             ))}
           </Carousel>
-       </section>
+        </section>
       )}
 
       {/* Empty state */}
@@ -128,12 +129,13 @@ export default async function HomePage() {
           <div className="text-6xl mb-4">🔭</div>
           <h2 className="text-xl font-semibold text-white mb-2">Sua biblioteca está vazia</h2>
           <p className="text-zinc-400 mb-6 max-w-md mx-auto">
-            Comece adicionando suas primeiras mídias — filmes, séries, animes, mangás, livros ou jogos.
+            Comece adicionando sua primeira obra na busca.
           </p>
-          <Link href="/search">
-            <button className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-colors">
-              Buscar e Adicionar
-            </button>
+          <Link
+            href="/search"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-base bg-indigo-600 text-white hover:bg-indigo-500 transition-colors"
+          >
+            Explorar catálogo
           </Link>
         </section>
       )}

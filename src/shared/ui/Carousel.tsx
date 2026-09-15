@@ -16,7 +16,7 @@ export function Carousel({ children, title, count, className }: CarouselProps) {
   const total = React.Children.count(children);
 
   return (
-    <section className={cn("mb-12", className)}>
+    <section className={cn("mb-12", className)} aria-label={title ?? "Carrossel de mídias"}>
       {title && (
         <div className="flex items-center justify-between mb-4 px-4">
           <h2 className="text-2xl font-bold text-white">{title}</h2>

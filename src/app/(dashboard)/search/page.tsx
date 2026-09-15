@@ -90,7 +90,6 @@ export default function SearchPage() {
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              aria-label="Buscar mídias por título"
               placeholder="Buscar filmes, séries, animes, mangás..."
               className="w-full px-4 py-3 pl-12 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-lg"
             />

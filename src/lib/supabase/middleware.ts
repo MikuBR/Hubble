@@ -1,6 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
+interface SupabaseCookie {
+  name: string;
+  value: string;
+  options?: Record<string, unknown>;
+}
+
 /**
  * Atualiza a sessão do Supabase em cada request.
  *
@@ -28,7 +34,7 @@ export async function updateSession(request: NextRequest) {
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: SupabaseCookie[]) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value),
           );

@@ -99,8 +99,6 @@ export default function LibraryPage() {
             <button
               key={v.value}
               onClick={() => setViewMode(v.value as "grid" | "list")}
-              aria-label={`Exibir biblioteca em modo ${v.label.toLowerCase()}`}
-              aria-pressed={viewMode === v.value}
               className={cn(
                 "px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
                 viewMode === v.value
@@ -125,7 +123,6 @@ export default function LibraryPage() {
               setActiveTab(tab.value);
               router.push(`/library${tab.value !== 'all' ? `?status=${tab.value}` : ''}`);
             }}
-            aria-label={`Ver mídias com status ${tab.label.toLowerCase()}`}
             className={cn(
               "flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors",
               activeTab === tab.value

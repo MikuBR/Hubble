@@ -76,7 +76,7 @@ export function truncate(text: string, maxLength: number): string {
 /**
  * Debounce function
  */
-export function debounce<T extends (...args: unknown[]) => unknown>(
+export function debounce<T extends (...args: any[]) => any>(
   fn: T,
   ms: number
 ): (...args: Parameters<T>) => void {

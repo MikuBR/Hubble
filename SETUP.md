@@ -8,11 +8,11 @@
 
 | Ferramenta | Versão mínima | Como instalar |
 |---|---|---|
-| Node.js | 20+ | <https://nodejs.org/> |
+| Node.js | 20+ | https://nodejs.org/ |
 | pnpm | 8+ | `npm install -g pnpm` |
-| Git | 2.30+ | <https://git-scm.com/> |
+| Git | 2.30+ | https://git-scm.com/ |
 
-*(Opcional)* Conta no Supabase: <https://supabase.com/>
+*(Opcional)* Conta no Supabase: https://supabase.com/
 
 ---
 
@@ -37,7 +37,7 @@ pnpm install
 
 ### Opção A — Supabase Cloud (recomendado)
 
-1. Crie um projeto em <https://supabase.com/dashboard/projects>
+1. Crie um projeto em https://supabase.com/dashboard/projects
 2. Em **Project Settings → API**, anote:
    - `Project URL`
    - `anon public` key
@@ -75,7 +75,7 @@ TMDB_API_KEY=sua-key
 ANILIST_CLIENT_ID=
 ANILIST_CLIENT_SECRET=
 
-# ── Observabilidade (opcional) ───────────────────────────────────────
+# ── Observabilidade (opcional) ────────────────────────────────────────
 SENTRY_DSN=
 NEXT_PUBLIC_PLAUSIBLE_DOMAIN=hubble.local
 
@@ -99,10 +99,15 @@ Execute os arquivos SQL em `supabase/migrations/` na ordem:
 supabase/migrations/
 ├── 0001_init_schema.sql         # Enums + 9 tabelas + RLS
 ├── 0002_triggers.sql            # 4 triggers
-├── 0003_cron_jobs.sql           # pg_cron + RPCs
-├── 20260816000006_fix_get_user_stats_v3.sql
-├── 20260819000001_fix_handle_new_user_username.sql
-└── 20260820000001_enhance_tag_preferences.sql
+├── 0003_rpc_functions.sql       # 3 RPCs (get_recommendations, get_horizons, get_user_stats)
+├── 0004_fix_signup_and_test_user.sql
+├── 0005_fix_validate_progress.sql
+├── 0006_fix_get_user_stats.sql
+├── 0006_fix_get_user_stats_v2.sql
+├── 0006_fix_get_user_stats_v3.sql
+├── 0001_fix_handle_new_user_username.sql
+├── 0001_enhance_tag_preferences.sql
+└── 0001_avatars_bucket.sql
 ```
 
 ### Via SQL Editor do Supabase Dashboard
@@ -116,12 +121,10 @@ supabase/migrations/
 ```bash
 curl -X POST \
   "https://api.supabase.com/v1/projects/<ref>/database/query" \
-  -H "Authorization: Bearer <SUPABASE_ACCESS_TOKEN>" \
+  -H "Authorization: Bearer <SUPABASE_SERVICE_ROLE_KEY>" \
   -H "Content-Type: application/json" \
   -d @supabase/migrations/0001_init_schema.sql
 ```
-
-*(Veja `PROGRESS.md` para o token usado em sessões anteriores.)*
 
 ---
 
@@ -147,6 +150,18 @@ pnpm tsx scripts/enrich-from-anilist.js
 
 > Respeita rate limit do AniList (~60 req/min). Pode demorar alguns minutos para 1k+ obras.
 
+### 7.3 Scripts complementares
+
+- `scripts/enrich-manga-anilist.js` — enriquecimento de mangás via AniList
+- `scripts/enrich-tmdb.js` — enriquecimento de filmes/séries via TMDB (principal)
+- `scripts/enrich-from-tmdb.mjs` — versão legacy do TMDB enricher
+- `scripts/enrich-titles-i18n.js` — popula `media_titles_i18n`
+- `scripts/seed-demo.cjs` — seed de demonstração (issue #24)
+- `scripts/validate-search.cjs` — validação manual da busca
+- `scripts/validate-signup.ts` — validação do fluxo de signup
+- `scripts/test-e2e-flow.js` — validação E2E manual (legacy)
+- `scripts/test-e2e-flow-fixed.js` — validação E2E manual (corrigido)
+
 ---
 
 ## 8. Rode o projeto
@@ -155,7 +170,7 @@ pnpm tsx scripts/enrich-from-anilist.js
 pnpm dev
 ```
 
-Acesse <http://localhost:3000>
+Acesse http://localhost:3000
 
 ---
 
@@ -204,19 +219,19 @@ supabase/
 scripts/
 ├── ingest-aodb.js         # AODB → offline_anime_mapping
 ├── enrich-from-anilist.js # AniList → media_catalog
-├── enrich-manga-anilist.js
-├── enrich-tmdb.js         # TMDB → media_catalog (principal: 200 filmes + 200 séries, detail calls)
-├── enrich-from-tmdb.mjs   # TMDB → media_catalog (versão legacy: 80 filmes + 50 séries, sem detail)
-├── enrich-titles-i18n.js
+├── enrich-manga-anilist.js # AniList → media_catalog (mangá)
+├── enrich-tmdb.js         # TMDB → media_catalog (principal)
+├── enrich-from-tmdb.mjs   # TMDB → media_catalog (legacy)
+├── enrich-titles-i18n.js  # media_titles_i18n
 ├── seed-demo.cjs          # Seed de demonstração (#24)
-├── validate-search.cjs
-├── validate-signup.ts
+├── validate-search.cjs    # Validação manual da busca
+├── validate-signup.ts     # Validação do signup
 └── test-e2e-flow*.js      # Validação E2E manual
 docs/
-├── README.md                                  # Índice + convenções
-├── archive/                                   # Snapshots históricos
+├── README.md              # Índice + convenções de contribuição
+├── archive/               # Snapshots históricos
 │   └── HUBBLE_CONSOLIDATED_ARCHIVE.md
-├── reviews/                                   # Relatórios de revisão/QA
+├── reviews/               # Relatórios de revisão/QA
 │   ├── QA_CRITICO_REPORT.md
 │   └── QA_CRITICO_REPORT_ADICIONAL.md
 └── RECOMMENDATION_ALGORITHM_RESEARCH.md, RUN_B0.md, *.md
@@ -231,7 +246,7 @@ docs/
 Se `/api/*` retornar redirect para `/login`, verifique o matcher em `middleware.ts`:
 
 ```ts
-matcher: ["/((?!_next/static|_next/image|favicon.ico|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"]
+matcher: ["/((?!_next/static|_next/image|favicon.ico|api|.*\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"]
 ```
 
 ### AODB ingest falha com redirect
@@ -257,4 +272,4 @@ PORT=3001 pnpm dev
 - Busque obras em `/search`
 - Adicione à biblioteca e marque progresso
 
-Para contribuir: veja as issues abertas em <https://github.com/MikuBR/Hubble/issues>.
+Para contribuir: veja as issues abertas em https://github.com/MikuBR/Hubble/issues.

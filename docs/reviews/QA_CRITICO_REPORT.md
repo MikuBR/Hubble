@@ -79,7 +79,7 @@ Isso significa que o arquivo existe no git index (commit anterior) e foi deletad
 
 ### 2.6 `HUBBLE_CONSOLIDATED_ARCHIVE.md` referenciando arquivos deletados
 
-O consolidated menciona `HUBBLE_ISSUES_PLAN.md` em múltiplos lugares (linhas 18, 74, 404-406). O arquivo foi deletado. O consolidated é um arquivo "archive" — faz sentido preservar referências históricas. Mas se alguém ler o consolidated e tentar abrir `HUBBLE_ISSUES_PLAN.md`, vai falhar. O consolidated deveria ter um aviso de que os arquivos originais foram deletados e onde encontrar o equivalente (se houver).
+O consolidated está arquivado em `docs/archive/HUBBLE_CONSOLIDATED_ARCHIVE.md`. Os arquivos originais (`ROADMAP.md`, `PROGRESS.md`, `HUBBLE_ISSUES_PLAN.md`, `LAUNCH_DRAFTS.md`) foram deletados; seu conteúdo foi preservado no consolidado. As citações "Fonte:" são créditos históricos, não dependências de leitura — o arquivo pode ser lido inteiramente sem os originais.
 
 ---
 
