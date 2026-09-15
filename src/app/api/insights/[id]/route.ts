@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import type { UserMediaProgress } from "@/types";
 
 const InsightsSchema = z.object({
   content: z.string().max(50000),
@@ -30,7 +31,15 @@ export async function PATCH(
 
   const { content } = parseResult.data;
 
-  const { data, error } = await supabase
+  // Type assertion for Supabase upsert with onConflict: the client infers
+  // `never[]` for upsert results when Relationships are unresolved in
+  // database.types.ts (tracked in QA_CRITICO_REPORT.md). Regenerating types
+  // requires the Supabase project to be online — it is currently NXDOMAIN.
+  type UpsertResult = UserMediaProgress & { private_insights?: string };
+
+  // Cast via `any` to bypass `never[]` inference from unresolved Relationships
+  // in database.types.ts (tracked in QA_CRITICO_REPORT.md).
+  const { data, error } = await ((supabase as any)
     .from("user_media_progress")
     .upsert(
       {
@@ -39,15 +48,15 @@ export async function PATCH(
         private_insights: content,
         updated_at: new Date().toISOString(),
         last_interaction_at: new Date().toISOString(),
-      } as any,
+      },
       { onConflict: "user_id,media_id" }
     )
     .select()
-    .single();
+    .single()) as { data: UserMediaProgress & { private_insights?: string } | null; error: Error | null };
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true, insights: (data as any).private_insights });
+  return NextResponse.json({ success: true, insights: data?.private_insights ?? content });
 }

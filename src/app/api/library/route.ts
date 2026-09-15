@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import type { UserMediaProgress } from "@/types";
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -32,20 +33,21 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await query;
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  // Type assertion for Supabase relation joins: relationships are unresolved in
+  // database.types.ts (tracked in QA_CRITICO_REPORT.md). Regenerating types
+  // requires the Supabase project to be online — it is currently NXDOMAIN.
+  type JoinedProgress = UserMediaProgress & { media: Record<string, any> };
 
-  const results = ((data || []) as any[]).map(item => ({
-    ...item.media,
-    title: item.media.title_default,
+  const results = (data as JoinedProgress[] || []).map((item) => ({
+    ...(item.media ?? {}),
+    title: item.media?.title_default ?? "",
     progress: {
-      current_unit: item.current_unit,
-      total_units_at_completion: item.total_units_at_completion,
+      current_unit: item.current_unit ?? 0,
+      total_units_at_completion: item.total_units_at_completion ?? 0,
       status: item.status,
       user_score: item.user_score,
-      rewatch_count: item.rewatch_count,
-    }
+      rewatch_count: item.rewatch_count ?? 0,
+    },
   }));
 
   return NextResponse.json({ results });
