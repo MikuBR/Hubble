@@ -31,14 +31,23 @@ export async function PATCH(
 
   const { content } = parseResult.data;
 
-  // Type assertion for Supabase upsert with onConflict: the client infers
-  // `never[]` for upsert results when Relationships are unresolved in
-  // database.types.ts (tracked in QA_CRITICO_REPORT.md). Regenerating types
-  // requires the Supabase project to be online — it is currently NXDOMAIN.
+  // SUPABASE_OFFLINE: database.types.ts lacks resolved Relationships, causing
+  // supabase.from() to return `never[]`. Until Supabase is online (tracked in
+  // QA_CRITICO_REPORT.md), we use a localized `any`-equivalent typed builder.
+  // Justification: Supabase project deleted (NXDOMAIN), type regeneration blocked.
   type UpsertResult = UserMediaProgress & { private_insights?: string };
+  const insightsTable = supabase.from('user_media_progress') as unknown as {
+    upsert: (
+      data: Record<string, unknown>,
+      opts: { onConflict: string }
+    ) => {
+      select: () => {
+        single: () => Promise<{ data: UpsertResult | null; error: { message?: string; code?: string } | null }>;
+      };
+    };
+  };
 
-  const { data, error } = await supabase
-    .from("user_media_progress")
+  const { data, error } = await insightsTable
     .upsert(
       {
         user_id: user.id,
@@ -50,7 +59,7 @@ export async function PATCH(
       { onConflict: "user_id,media_id" }
     )
     .select()
-    .single() as { data: UserMediaProgress & { private_insights?: string } | null; error: Error | null };
+    .single() as { data: UpsertResult | null; error: { message?: string; code?: string } | null };
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

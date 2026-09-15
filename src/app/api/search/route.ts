@@ -3,6 +3,44 @@ import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
 import { resolveTitle, pickLanguagePref } from "@/lib/i18n/titles";
 
+// Type assertion for Supabase select results: the @supabase/ssr client
+// infers `never[]` for queries when Relationships are unresolved in
+// src/lib/database.types.ts (tracked in QA_CRITICO_REPORT.md).
+// The shape below matches the columns selected in the search query.
+// Regenerating types would require the Supabase project to be online — NXDOMAIN.
+type SearchResultRow = {
+  id: string;
+  media_type: string;
+  title_default: string;
+  title_romaji: string | null;
+  title_english: string | null;
+  title_native: string | null;
+  title_ptbr: string | null;
+  cover_url: string | null;
+  backdrop_url: string | null;
+  release_year: number | null;
+  release_status: string;
+  total_episodes: number | null;
+  total_chapters: number | null;
+  total_volumes: number | null;
+  duration_minutes: number | null;
+  age_rating_br: string | null;
+  is_adult: boolean;
+  prestige_badge: string | null;
+  genres: string[] | null;
+  themes: string[] | null;
+  studios: string[] | null;
+  user_score_global: number | null;
+  anilist_id: number | null;
+  tmdb_id: number | null;
+};
+
+type ProfileRow = {
+  preferred_language_western: string;
+  preferred_language_oriental: string;
+  enable_nsfw_filter: boolean;
+};
+
 const SearchQuerySchema = z.object({
   q: z.string().min(1).max(100),
   type: z.enum(['movie', 'tv_series', 'anime', 'manga', 'manhwa', 'manhua', 'novel', 'book', 'game', 'all']).nullable().optional(),
@@ -50,10 +88,10 @@ export async function GET(request: NextRequest) {
       .from('profiles')
       .select('preferred_language_western, preferred_language_oriental, enable_nsfw_filter')
       .eq('id', user.id)
-      .single();
+      .single() as { data: ProfileRow | null; error: Error | null };
     if (profile) {
-      westernPref = profile.preferred_language_western;
-      orientalPref = profile.preferred_language_oriental;
+      westernPref = profile.preferred_language_western as 'pt-BR' | 'en' | 'es';
+      orientalPref = profile.preferred_language_oriental as 'pt-BR' | 'en' | 'romaji' | 'native';
       enableNsfwFilter = (profile as { enable_nsfw_filter?: boolean }).enable_nsfw_filter ?? true;
     }
   }
@@ -62,7 +100,27 @@ export async function GET(request: NextRequest) {
   // Fetch limit+1 para detectar hasMore corretamente (evita falso-positivo
   // quando o total é múltiplo exato de limit).
   const fetchLimit = limit + 1;
-  let query = supabase
+
+  // SUPABASE_OFFLINE: sem Relationships resolvidos em database.types.ts,
+  // supabase.from('media_catalog') infere `never[]`. Uma asserção localizada
+  // no builder permite que a cadeia de métodos seja verificada contra
+  // SearchResultRow. Justificativa: projeto Supabase deletado (NXDOMAIN),
+  // regeneração de tipos bloqueada — rastreado em QA_CRITICO_REPORT.md.
+  type SearchQueryBuilder = {
+    textSearch: (
+      column: string,
+      query: string,
+      options: { type: string; config: string }
+    ) => SearchQueryBuilder;
+    range: (from: number, to: number) => SearchQueryBuilder;
+    order: (
+      column: string,
+      options: { ascending: boolean }
+    ) => SearchQueryBuilder;
+    eq: (column: string, value: string | boolean) => SearchQueryBuilder;
+  };
+
+  const builder = supabase
     .from('media_catalog')
     .select(`
       id,
@@ -89,11 +147,10 @@ export async function GET(request: NextRequest) {
       user_score_global,
       anilist_id,
       tmdb_id
-    `)
-    .textSearch('title_default', q, {
-      type: 'websearch',
-      config: 'portuguese',
-    })
+    `) as unknown as SearchQueryBuilder;
+
+  let query = builder
+    .textSearch('title_default', q, { type: 'websearch', config: 'portuguese' })
     .range(offset, offset + fetchLimit - 1)
     .order('user_score_global', { ascending: false })
     .order('id', { ascending: true });
@@ -101,13 +158,14 @@ export async function GET(request: NextRequest) {
   if (type && type !== 'all') {
     query = query.eq('media_type', type);
   }
-
-  // Filtrar NSFW
   if (enableNsfwFilter) {
     query = query.eq('is_adult', false);
   }
 
-  const { data: localResults, error } = await query;
+  const { data: localResults, error } = await query as unknown as {
+    data: SearchResultRow[] | null;
+    error: { message?: string } | null;
+  };
 
   if (error) {
     console.error('Search error:', error);
@@ -127,7 +185,7 @@ export async function GET(request: NextRequest) {
     const resolvedTitle = resolveTitle(media, langPref);
 
     return {
-      ...(media as Record<string, unknown>),
+      ...media as SearchResultRow,
       title: resolvedTitle,
       // Para UI: mostra tipo de mídia traduzido
       mediaTypeLabel: getMediaTypeLabel(media.media_type),

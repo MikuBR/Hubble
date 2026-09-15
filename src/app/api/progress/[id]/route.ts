@@ -2,6 +2,33 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
+// Supabase error type (from @supabase/supabase-js): errors returned by the
+// client have a `code` string property (e.g. 'PGRST116' for "not found").
+type SupabaseError = { code?: string; message?: string };
+
+type ProgressRow = {
+  id: string;
+  user_id: string;
+  media_id: string;
+  current_unit: number | null;
+  status: string | null;
+  user_score: number | null;
+  started_at: string | null;
+  completed_at: string | null;
+  total_units_at_completion: number | null;
+  rewatch_count: number | null;
+  updated_at: string;
+  last_interaction_at: string;
+};
+
+type MediaInfoRow = {
+  id: string;
+  release_status: string;
+  total_episodes: number | null;
+  total_chapters: number | null;
+  media_type: string;
+};
+
 const ProgressSchema = z.object({
   unit: z.number().int().min(0).optional(),       // episódio/capítulo atual
   status: z.enum(['planning', 'watching', 'paused', 'completed', 'dropped', 'rewatching']).optional(),
@@ -42,12 +69,36 @@ export async function PATCH(
   const { unit, status, score, increment } = parseResult.data;
 
   // Buscar progresso atual
-  const { data: current, error: fetchError } = await supabase
-    .from('user_media_progress')
+  // SUPABASE_OFFLINE: database.types.ts lacks resolved Relationships, causing
+  // supabase.from() to return `never[]`. Until Supabase is online and types are
+  // regenerated (tracked in QA_CRITICO_REPORT.md), we accept a localized `any`
+  // on the builder so downstream calls type-check against our row types.
+  // Two separate typed builders are used: one for SELECT, one for UPSERT.
+  const progressSelectBuilder = supabase.from('user_media_progress') as unknown as {
+    select: (columns: string) => {
+      eq: (c: string, v: string) => {
+        eq: (c: string, v: string) => {
+          single: () => Promise<{ data: ProgressRow | null; error: SupabaseError | null }>;
+        };
+      };
+    };
+  };
+  const progressUpsertBuilder = supabase.from('user_media_progress') as unknown as {
+    upsert: (
+      data: Record<string, unknown>,
+      opts: { onConflict: string }
+    ) => {
+      select: () => {
+        single: () => Promise<{ data: ProgressRow | null; error: SupabaseError | null }>;
+      };
+    };
+  };
+
+  const { data: current, error: fetchError } = await progressSelectBuilder
     .select('*')
     .eq('user_id', user.id)
     .eq('media_id', mediaId)
-    .single();
+    .single() as { data: ProgressRow | null; error: SupabaseError | null };
 
   if (fetchError && fetchError.code !== 'PGRST116') { // não encontrado é OK
     console.error('Fetch progress error:', fetchError);
@@ -55,11 +106,16 @@ export async function PATCH(
   }
 
   // Verificar se mídia existe e pegar info de hiato
-  const { data: media } = await supabase
+  const { data: media, error: mediaError } = await supabase
     .from('media_catalog')
     .select('release_status, total_episodes, total_chapters, media_type')
     .eq('id', mediaId)
-    .single();
+    .single() as { data: MediaInfoRow | null; error: SupabaseError | null };
+
+  if (mediaError && mediaError.code !== 'PGRST116') {
+    console.error('Fetch media error:', mediaError);
+    return NextResponse.json({ error: 'Erro ao buscar mídia' }, { status: 500 });
+  }
 
   if (!media) {
     return NextResponse.json({ error: 'Mídia não encontrada' }, { status: 404 });
@@ -125,8 +181,9 @@ export async function PATCH(
   }
 
   // Upsert
-  const { data: updated, error: upsertError } = await supabase
-    .from('user_media_progress')
+  // SUPABASE_OFFLINE: see comment above. Use a separate typed builder for the
+  // upsert chain so the argument object type-checks against Record<string, unknown>.
+  const { data: updated, error: upsertError } = await progressUpsertBuilder
     .upsert(
       {
         user_id: user.id,
@@ -136,7 +193,7 @@ export async function PATCH(
       { onConflict: 'user_id,media_id' }
     )
     .select()
-    .single();
+    .single() as { data: ProgressRow | null; error: SupabaseError | null };
 
   if (upsertError) {
     console.error('Upsert progress error:', upsertError);
