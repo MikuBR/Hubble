@@ -154,12 +154,10 @@ pnpm tsx scripts/enrich-from-anilist.js
 
 - `scripts/enrich-manga-anilist.js` — enriquecimento de mangás via AniList
 - `scripts/enrich-tmdb.js` — enriquecimento de filmes/séries via TMDB (principal)
-- `scripts/enrich-from-tmdb.mjs` — versão legacy do TMDB enricher
 - `scripts/enrich-titles-i18n.js` — popula `media_titles_i18n`
 - `scripts/seed-demo.cjs` — seed de demonstração (issue #24)
-- `scripts/validate-search.cjs` — validação manual da busca
+- `scripts/validate-search.cjs` — smoke test de conectividade (NÃO valida `/api/search`)
 - `scripts/validate-signup.ts` — validação do fluxo de signup
-- `scripts/test-e2e-flow.js` — validação E2E manual (legacy)
 - `scripts/test-e2e-flow-fixed.js` — validação E2E manual (corrigido)
 
 ---
@@ -201,7 +199,7 @@ src/
 │   │   ├── recommendations/ # Para Você / Novos Horizontes
 │   │   ├── settings/      # Perfil e preferências
 │   │   └── admin/         # Admin awards
-│   ├── api/               # Route Handlers
+│   │   ├── api/               # Route Handlers
 │   └── globals.css        # Tailwind v4
 ├── shared/
 │   ├── ui/                # Componentes reutilizáveis
@@ -215,18 +213,28 @@ src/
 └── widgets/               # Header, sidebar
 supabase/
 ├── migrations/            # Migrations SQL versionadas
+│   ├── 20260816000001_init_schema.sql
+│   ├── 20260816000002_triggers.sql
+│   ├── 20260816000003_rpc_functions.sql
+│   ├── 20260816000004_fix_signup_and_test_user.sql
+│   ├── 20260816000005_fix_validate_progress.sql
+|| `0006_fix_get_user_stats.sql`
+├── `0007_fix_get_user_stats_v2.sql`
+├── `0008_fix_get_user_stats_v3.sql`
+│   ├── 20260819000001_fix_handle_new_user_username.sql
+│   ├── 20260820000001_enhance_tag_preferences.sql
+│   └── 20260821000001_avatars_bucket.sql
 └── functions/             # Edge Functions (Deno)
 scripts/
 ├── ingest-aodb.js         # AODB → offline_anime_mapping
 ├── enrich-from-anilist.js # AniList → media_catalog
 ├── enrich-manga-anilist.js # AniList → media_catalog (mangá)
 ├── enrich-tmdb.js         # TMDB → media_catalog (principal)
-├── enrich-from-tmdb.mjs   # TMDB → media_catalog (legacy)
 ├── enrich-titles-i18n.js  # media_titles_i18n
 ├── seed-demo.cjs          # Seed de demonstração (#24)
-├── validate-search.cjs    # Validação manual da busca
+├── validate-search.cjs    # Smoke test (Supabase + AniList)
 ├── validate-signup.ts     # Validação do signup
-└── test-e2e-flow*.js      # Validação E2E manual
+└── test-e2e-flow-fixed.js # Validação E2E manual (corrigido)
 docs/
 ├── README.md              # Índice + convenções de contribuição
 ├── archive/               # Snapshots históricos

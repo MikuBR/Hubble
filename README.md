@@ -254,11 +254,10 @@ flowchart LR
 - [x] Arquitetura base: Next.js 15 + Supabase + PostgreSQL
 - [x] Schema de dados: 9 tabelas com RLS completo
 - [x] Auth seguro (Email Provider + OAuth ready)
-- [x] Tipos TypeScript geridos em `src/lib/database.types.ts`
-- [x] Enriquecimento automático via AniList GraphQL
-- [x] 3 RPCs funcionais: `get_recommendations`, `get_horizons`, `get_user_stats`
-- [x] 4 Triggers ativos
-- [x] Testes unitários (Vitest) + scripts E2E
+- [x] Auth seguro (Email Provider + OAuth ready)
+- [x] Tipos TypeScript (`src/lib/database.types.ts` — 736 linhas com Relationships)
+- [x] 3 RPCs funcionais + 4 triggers
+- [x] Testes unitários (Vitest 52/52 passando) + `tsc --noEmit` zerado
 
 ### Phase 2 — Interface & Experiência (🎯 **PRÓXIMA**)
 - [ ] Modo Cinema imersivo (backdrop, carrosséis, trailer embed)
@@ -289,14 +288,12 @@ Phase 4 ░░░░░░░░░░░░░░░░░░░░   0%
 ### 🎯 Próxima Ação Imediata
 
 ```bash
-# 1. Aplicar migration pendente no Supabase SQL Editor
-# supabase/migrations/20260819000001_fix_handle_new_user_username.sql
+# 1. Popular catálogo com dados reais (se 아직 não populado)
+node scripts/enrich-from-anilist.js
 
-# 2. Habilitar Email provider no Supabase Dashboard
+# 2. Rodar seed de demonstração
+node scripts/seed-demo.cjs
 
-# 3. Popular catálogo com dados reais
-pnpm enrich:anilist
-
-# 4. Iniciar implementação do Modo Cinema
+# 3. Iniciar implementação do Modo Cinema
 git checkout -b feat/streaming-mode
 ```

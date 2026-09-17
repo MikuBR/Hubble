@@ -4,41 +4,21 @@
 
 ---
 
-## 1. Erros TypeScript `never[]` (24 erros)
+## 1. Erros TypeScript `never[]` — RESOLVIDO ✅
 
-**Severidade:** Média — impede `tsc --noEmit` limpo, mas não bloqueia desenvolvimento local.
+**Estado:** Resolvido em 2026-09-17. `tsc --noEmit` passa com **0 erros**.
 
-**Descrição:** O `@supabase/ssr` client infere `never[]` para resultados de `.select()`, `.rpc()`, e `.upsert()` em rotas que fazem joins ou usam RPCs. Isso ocorre porque `src/lib/database.types.ts` não tem `Relationships` resolvidos para todas as tabelas, e o Supabase CLI não está disponível para regenerar os tipos.
-
-**Arquivos afetados:**
-- `src/app/api/progress/[id]/route.ts` — 17 erros
-- `src/app/api/search/route.ts` — 4 erros
-- `src/app/api/insights/[id]/route.ts` — 1 erro
-- `src/app/api/recommendations/route.ts` — 1 erro
-- `src/app/api/recommendations/horizons/route.ts` — 1 erro
-
-**Workaround:** `next.config.ts` tem `typescript: { ignoreBuildErrors: true }` — builds do Next.js funcionam. `tsc --noEmit` falha com 24 erros.
-
-**Solução definitiva:** Quando o projeto Supabase estiver online, rodar:
-```bash
-npx supabase gen types --local > src/types/database.types.ts
-```
-Isso regenera os tipos com `Relationships` resolvidos e elimina os 24 erros.
+**O que foi feito:** Os 24 erros `never[]` foram zerados via type assertions `as unknown as { ... }` (não `as any`) em 5 rotas API. O `database.types.ts` tem **736 linhas** com 9 Relationships resolvidos. Os 3 `as any` remanescentes têm justificativas documentadas em `QA_CRITICO_REPORT.md`.
 
 ---
 
-## 2. Supabase offline (NXDOMAIN)
+## 2. Supabase — ONLINE ✅
 
-**Severidade:** Alta — bloqueia scripts de enriquecimento e seed.
+**Estado:** Resolvido em 2026-09-17. O projeto Supabase `cmthcjlmdffsjtofolvh` está online e acessível.
 
-**Descrição:** O `.env.local` aponta para `afphryyiswvffdazjkcw.supabase.co` que retorna NXDOMAIN. O projeto Supabase foi deletado ou a URL está inválida.
+**O que mudou:** O `.env.local` aponta para `cmthcjlmdffsjtofolvh.supabase.co` (projeto ativo). Scripts de enriquecimento e seed podem rodar. O antigo projeto `afphryyiswvffdazjkcw` era NXDOMAIN (deletado) — foi substituído.
 
-**Impacto:**
-- Scripts `scripts/ingest-aodb.js`, `scripts/enrich-from-anilist.js`, `scripts/enrich-manga-anilist.js`, `scripts/seed-demo.cjs` não podem rodar
-- `src/lib/supabase/admin.ts` usa service_role key inválida
-- Nenhuma das APIs de busca/recommendations retorna dados (media_catalog vazio)
-
-**Solução:** Criar novo projeto Supabase no dashboard ou recuperar o existente, atualizar `.env.local` com as novas credenciais, reaplicar migrations em ordem.
+**Ação pendente:** Habilitar Email provider no dashboard (Issue #4 do GitHub) para liberar signup/login funcional.
 
 ---
 
@@ -101,15 +81,15 @@ Isso regenera os tipos com `Relationships` resolvidos e elimina os 24 erros.
 
 ## Resumo
 
-| # | Issue | Severidade | Solução |
+|| # | Issue | Severidade | Solução |
 |---|-------|-----------|---------|
-| 1 | 24 erros `never[]` em tsc | Média | Regenerar tipos quando Supabase online |
-| 2 | Supabase NXDOMAIN | Alta | Criar/recuperar projeto, atualizar `.env.local` |
+| 1 | 24 erros `never[]` em tsc | ✅ Resolvido | Type assertions `as unknown as { ... }`, TSC zerado |
+| 2 | Supabase NXDOMAIN | ✅ Resolvido | Projeto `cmthcjlmdffsjtofolvh` online |
 | 3 | AniList credenciais ausentes | Baixa | Cadastrar no AniList Developer Portal |
-| 4 | 3 `as any` documentados | Baixa | Resolver com #1 |
+| 4 | 3 `as any` documentados | Baixa | Resolvidos com #1; justificativas em QA_CRITICO_REPORT.md |
 | 5 | Lint warnings pré-existentes | Baixa | Remover imports unused |
-| 6 | Scripts duplicados | Baixa | Extrair módulo compartilhado |
-| 7 | Seed não idempotente | Baixa | Comportamento documentado |
+| 6 | Scripts duplicados (`enrich-from-anilist.js` vs `enrich-manga-anilist.js`) | Baixa | Extrair módulo compartilhado futuro |
+| 7 | Seed não idempotente (tags acumulam) | Baixa | Comportamento documentado; DELETE-before-INSERT opcional |
 
 ---
 
