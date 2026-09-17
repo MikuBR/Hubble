@@ -48,4 +48,4 @@ supabase/.temp
 /playwright-report/
 
 # Generated types (regenerate via `supabase gen types`)
-/src/types/database.types.ts
+# NOTE: tracked in git — do NOT ignore
