@@ -7,7 +7,7 @@
 -- ═══════════════════════════════════════════════════════════
 -- EXTENSÕES
 -- ═══════════════════════════════════════════════════════════
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 -- pg_cron é habilitado no dashboard do Supabase (Database → Extensions)
 
@@ -80,7 +80,7 @@ CREATE INDEX idx_profiles_username ON profiles(username);
 -- TABELA 2: media_catalog (público para leitura)
 -- ═══════════════════════════════════════════════════════════
 CREATE TABLE media_catalog (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     media_type media_type_enum NOT NULL,
 
     -- Identificadores externos (para linking com APIs)
@@ -142,7 +142,7 @@ CREATE INDEX idx_media_release_year ON media_catalog(release_year);
 -- TABELA 3: user_media_progress
 -- ═══════════════════════════════════════════════════════════
 CREATE TABLE user_media_progress (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
     media_id UUID NOT NULL REFERENCES media_catalog(id) ON DELETE CASCADE,
 
@@ -208,7 +208,7 @@ CREATE TABLE media_titles_i18n (
 -- TABELA 6: awards (admin-only)
 -- ═══════════════════════════════════════════════════════════
 CREATE TABLE awards (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     media_id UUID NOT NULL REFERENCES media_catalog(id) ON DELETE CASCADE,
     award_name TEXT NOT NULL,
     category TEXT,
@@ -224,7 +224,7 @@ CREATE INDEX idx_awards_year ON awards(year);
 -- TABELA 7: export_logs (auditoria)
 -- ═══════════════════════════════════════════════════════════
 CREATE TABLE export_logs (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
     format TEXT NOT NULL CHECK (format IN ('json', 'csv')),
     file_size_bytes INT,
@@ -235,7 +235,7 @@ CREATE TABLE export_logs (
 -- TABELA 8: ingestion_logs (logs de jobs)
 -- ═══════════════════════════════════════════════════════════
 CREATE TABLE ingestion_logs (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     source TEXT NOT NULL,  -- 'aodb', 'anilist', 'tmdb', etc.
     started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     completed_at TIMESTAMPTZ,

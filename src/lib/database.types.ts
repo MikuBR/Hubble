@@ -1,524 +1,736 @@
-// ═══════════════════════════════════════════════════════════════
-// HUBBLE — Database Types (Generated from Supabase Migrations)
-// Source: supabase/migrations/20260816000001_init_schema.sql
-//         supabase/migrations/20260816000002_triggers.sql
-//         supabase/migrations/20260816000003_rpc_functions.sql
-//         supabase/migrations/20260816000004_fix_signup_and_test_user.sql
-//         supabase/migrations/20260816000005_fix_validate_progress.sql
-//         supabase/migrations/20260816000006_fix_get_user_stats_v3.sql
-// Generated: 2026-08-16
-// ═══════════════════════════════════════════════════════════════
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
-// Enums
-export type MediaTypeEnum = 
-  | 'movie' 
-  | 'tv_series' 
-  | 'anime'
-  | 'manga' 
-  | 'manhwa' 
-  | 'manhua'
-  | 'novel' 
-  | 'book' 
-  | 'game';
-
-export type UserStatusEnum = 
-  | 'planning'    // pretendo assistir/ler
-  | 'watching'    // em andamento
-  | 'paused'      // pausado (sem previsão de retorno)
-  | 'completed'   // terminado
-  | 'dropped'     // abandonado
-  | 'rewatching'; // re-assistindo/re-lendo
-
-export type AgeRatingBrEnum = 'L' | '10' | '12' | '14' | '16' | '18';
-
-export type PrestigeBadgeEnum = 'none' | 'nominee' | 'winner';
-
-export type ReleaseStatusEnum = 
-  | 'airing' 
-  | 'finished' 
-  | 'hiatus' 
-  | 'cancelled' 
-  | 'upcoming' 
-  | 'orphaned';
-
-// ═══════════════════════════════════════════════════════════════
-// TABELA: profiles
-// ═══════════════════════════════════════════════════════════════
-export interface ProfilesRow {
-  id: string;                    // UUID - REFERENCES auth.users(id) ON DELETE CASCADE
-  username: string;              // UNIQUE NOT NULL, 3-30 chars
-  display_name: string | null;
-  avatar_url: string | null;
-  default_view_mode: 'auto' | 'streaming' | 'reading';
-  theme: 'light' | 'dark' | 'system';
-  enable_nsfw_filter: boolean;
-  enable_streaming: boolean;
-  enable_reading: boolean;
-  enable_games: boolean;
-  preferred_language_western: 'pt-BR' | 'en' | 'es';
-  preferred_language_oriental: 'romaji' | 'en' | 'pt-BR' | 'native';
-  allow_public_share_links: boolean;
-  is_admin: boolean;
-  created_at: string;            // TIMESTAMPTZ
-  updated_at: string;            // TIMESTAMPTZ
-}
-
-export interface ProfilesInsert {
-  id: string;
-  username: string;
-  display_name?: string | null;
-  avatar_url?: string | null;
-  default_view_mode?: 'auto' | 'streaming' | 'reading';
-  theme?: 'light' | 'dark' | 'system';
-  enable_nsfw_filter?: boolean;
-  enable_streaming?: boolean;
-  enable_reading?: boolean;
-  enable_games?: boolean;
-  preferred_language_western?: 'pt-BR' | 'en' | 'es';
-  preferred_language_oriental?: 'romaji' | 'en' | 'pt-BR' | 'native';
-  allow_public_share_links?: boolean;
-  is_admin?: boolean;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface ProfilesUpdate {
-  username?: string;
-  display_name?: string | null;
-  avatar_url?: string | null;
-  default_view_mode?: 'auto' | 'streaming' | 'reading';
-  theme?: 'light' | 'dark' | 'system';
-  enable_nsfw_filter?: boolean;
-  enable_streaming?: boolean;
-  enable_reading?: boolean;
-  enable_games?: boolean;
-  preferred_language_western?: 'pt-BR' | 'en' | 'es';
-  preferred_language_oriental?: 'romaji' | 'en' | 'pt-BR' | 'native';
-  allow_public_share_links?: boolean;
-  is_admin?: boolean;
-  updated_at?: string;
-}
-
-// ═══════════════════════════════════════════════════════════════
-// TABELA: media_catalog
-// ═══════════════════════════════════════════════════════════════
-export interface MediaCatalogRow {
-  id: string;                    // UUID PRIMARY KEY DEFAULT uuid_generate_v4()
-  media_type: MediaTypeEnum;
-  tmdb_id: number | null;
-  anilist_id: number | null;
-  mal_id: number | null;
-  kitsu_id: number | null;
-  mangadex_id: string | null;
-  openlibrary_id: string | null;
-  title_default: string;
-  title_romaji: string | null;
-  title_english: string | null;
-  title_native: string | null;
-  title_ptbr: string | null;
-  synopsis: string | null;
-  cover_url: string | null;
-  backdrop_url: string | null;
-  release_year: number | null;
-  release_status: ReleaseStatusEnum;
-  total_episodes: number;
-  total_chapters: number;
-  total_volumes: number;
-  duration_minutes: number | null;
-  episode_duration_minutes: number | null;
-  age_rating_br: AgeRatingBrEnum;
-  is_adult: boolean;
-  prestige_badge: PrestigeBadgeEnum;
-  genres: string[];              // TEXT[] NOT NULL DEFAULT '{}'
-  themes: string[];              // TEXT[] NOT NULL DEFAULT '{}'
-  studios: string[];             // TEXT[] NOT NULL DEFAULT '{}'
-  user_score_global: number | null; // NUMERIC(3,1)
-  created_at: string;            // TIMESTAMPTZ
-  updated_at: string;            // TIMESTAMPTZ
-}
-
-export interface MediaCatalogInsert {
-  media_type: MediaTypeEnum;
-  tmdb_id?: number | null;
-  anilist_id?: number | null;
-  mal_id?: number | null;
-  kitsu_id?: number | null;
-  mangadex_id?: string | null;
-  openlibrary_id?: string | null;
-  title_default: string;
-  title_romaji?: string | null;
-  title_english?: string | null;
-  title_native?: string | null;
-  title_ptbr?: string | null;
-  synopsis?: string | null;
-  cover_url?: string | null;
-  backdrop_url?: string | null;
-  release_year?: number | null;
-  release_status?: ReleaseStatusEnum;
-  total_episodes?: number;
-  total_chapters?: number;
-  total_volumes?: number;
-  duration_minutes?: number | null;
-  episode_duration_minutes?: number | null;
-  age_rating_br?: AgeRatingBrEnum;
-  is_adult?: boolean;
-  prestige_badge?: PrestigeBadgeEnum;
-  genres?: string[];
-  themes?: string[];
-  studios?: string[];
-  user_score_global?: number | null;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface MediaCatalogUpdate {
-  media_type?: MediaTypeEnum;
-  tmdb_id?: number | null;
-  anilist_id?: number | null;
-  mal_id?: number | null;
-  kitsu_id?: number | null;
-  mangadex_id?: string | null;
-  openlibrary_id?: string | null;
-  title_default?: string;
-  title_romaji?: string | null;
-  title_english?: string | null;
-  title_native?: string | null;
-  title_ptbr?: string | null;
-  synopsis?: string | null;
-  cover_url?: string | null;
-  backdrop_url?: string | null;
-  release_year?: number | null;
-  release_status?: ReleaseStatusEnum;
-  total_episodes?: number;
-  total_chapters?: number;
-  total_volumes?: number;
-  duration_minutes?: number | null;
-  episode_duration_minutes?: number | null;
-  age_rating_br?: AgeRatingBrEnum;
-  is_adult?: boolean;
-  prestige_badge?: PrestigeBadgeEnum;
-  genres?: string[];
-  themes?: string[];
-  studios?: string[];
-  user_score_global?: number | null;
-  updated_at?: string;
-}
-
-// ═══════════════════════════════════════════════════════════════
-// TABELA: user_media_progress
-// ═══════════════════════════════════════════════════════════════
-export interface UserMediaProgressRow {
-  id: string;                    // UUID PRIMARY KEY DEFAULT uuid_generate_v4()
-  user_id: string;               // UUID NOT NULL REFERENCES profiles(id)
-  media_id: string;              // UUID NOT NULL REFERENCES media_catalog(id)
-  status: UserStatusEnum;
-  current_unit: number;
-  total_units_at_completion: number | null;
-  user_score: number | null;     // NUMERIC(3,1) CHECK (0-10)
-  rewatch_count: number;
-  started_at: string | null;     // DATE
-  completed_at: string | null;   // DATE
-  last_interaction_at: string;   // TIMESTAMPTZ
-  private_insights: string;
-  private_spoilers: string;
-  created_at: string;            // TIMESTAMPTZ
-  updated_at: string;            // TIMESTAMPTZ
-}
-
-export interface UserMediaProgressInsert {
-  user_id: string;
-  media_id: string;
-  status?: UserStatusEnum;
-  current_unit?: number;
-  total_units_at_completion?: number | null;
-  user_score?: number | null;
-  rewatch_count?: number;
-  started_at?: string | null;
-  completed_at?: string | null;
-  last_interaction_at?: string;
-  private_insights?: string;
-  private_spoilers?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface UserMediaProgressUpdate {
-  status?: UserStatusEnum;
-  current_unit?: number;
-  total_units_at_completion?: number | null;
-  user_score?: number | null;
-  rewatch_count?: number;
-  started_at?: string | null;
-  completed_at?: string | null;
-  last_interaction_at?: string;
-  private_insights?: string;
-  private_spoilers?: string;
-  updated_at?: string;
-}
-
-// ═══════════════════════════════════════════════════════════════
-// TABELA: user_tag_preferences (algoritmo de afinidade)
-// ═══════════════════════════════════════════════════════════════
-export type TagTypeEnum = 'genre' | 'theme' | 'studio';
-
-export interface UserTagPreferencesRow {
-  user_id: string;               // UUID NOT NULL REFERENCES profiles(id)
-  tag_type: TagTypeEnum;
-  tag_name: string;
-  score: number;                 // INT DEFAULT 0 CHECK (-50 to 100)
-  updated_at: string;            // TIMESTAMPTZ
-}
-
-export interface UserTagPreferencesInsert {
-  user_id: string;
-  tag_type: TagTypeEnum;
-  tag_name: string;
-  score?: number;
-  updated_at?: string;
-}
-
-export interface UserTagPreferencesUpdate {
-  score?: number;
-  updated_at?: string;
-}
-
-// ═══════════════════════════════════════════════════════════════
-// TABELA: media_titles_i18n
-// ═══════════════════════════════════════════════════════════════
-export interface MediaTitlesI18nRow {
-  media_id: string;              // UUID REFERENCES media_catalog(id)
-  language: string;
-  title: string;
-  is_official: boolean;
-}
-
-export interface MediaTitlesI18nInsert {
-  media_id: string;
-  language: string;
-  title: string;
-  is_official?: boolean;
-}
-
-// ═══════════════════════════════════════════════════════════════
-// TABELA: awards
-// ═══════════════════════════════════════════════════════════════
-export interface AwardsRow {
-  id: string;                    // UUID PRIMARY KEY
-  media_id: string;              // UUID REFERENCES media_catalog(id)
-  award_name: string;
-  category: string | null;
-  year: number;
-  is_winner: boolean;
-  created_at: string;            // TIMESTAMPTZ
-}
-
-export interface AwardsInsert {
-  media_id: string;
-  award_name: string;
-  category?: string | null;
-  year: number;
-  is_winner: boolean;
-  created_at?: string;
-}
-
-// ═══════════════════════════════════════════════════════════════
-// TABELA: export_logs
-// ═══════════════════════════════════════════════════════════════
-export interface ExportLogsRow {
-  id: string;                    // UUID PRIMARY KEY
-  user_id: string;               // UUID REFERENCES profiles(id)
-  format: 'json' | 'csv';
-  file_size_bytes: number | null;
-  created_at: string;            // TIMESTAMPTZ
-}
-
-export interface ExportLogsInsert {
-  user_id: string;
-  format: 'json' | 'csv';
-  file_size_bytes?: number | null;
-  created_at?: string;
-}
-
-// ═══════════════════════════════════════════════════════════════
-// TABELA: ingestion_logs
-// ══════════════════════════════════════════════════════════════
-export interface IngestionLogsRow {
-  id: string;                    // UUID PRIMARY KEY
-  source: string;                // 'aodb' | 'anilist' | 'tmdb' etc.
-  started_at: string;            // TIMESTAMPTZ
-  completed_at: string | null;   // TIMESTAMPTZ
-  status: 'running' | 'success' | 'failed';
-  records_processed: number;
-  records_inserted: number;
-  records_updated: number;
-  error_message: string | null;
-}
-
-export interface IngestionLogsInsert {
-  source: string;
-  started_at?: string;
-  completed_at?: string | null;
-  status?: 'running' | 'success' | 'failed';
-  records_processed?: number;
-  records_inserted?: number;
-  records_updated?: number;
-  error_message?: string | null;
-}
-
-export interface IngestionLogsUpdate {
-  completed_at?: string | null;
-  status?: 'running' | 'success' | 'failed';
-  records_processed?: number;
-  records_inserted?: number;
-  records_updated?: number;
-  error_message?: string | null;
-}
-
-// ═══════════════════════════════════════════════════════════════
-// TABELA: offline_anime_mapping (AODB cross-IDs)
-// ═══════════════════════════════════════════════════════════════
-export interface OfflineAnimeMappingRow {
-  aodb_title: string;            // PRIMARY KEY
-  anilist_id: number | null;
-  mal_id: number | null;
-  kitsu_id: number | null;
-  anidb_id: number | null;
-  updated_at: string;            // TIMESTAMPTZ
-}
-
-export interface OfflineAnimeMappingInsert {
-  aodb_title: string;
-  anilist_id?: number | null;
-  mal_id?: number | null;
-  kitsu_id?: number | null;
-  anidb_id?: number | null;
-  updated_at?: string;
-}
-
-// ═══════════════════════════════════════════════════════════════
-// RPC Return Types
-// ═══════════════════════════════════════════════════════════════
-export interface GetUserStatsResult {
-  total_items: number;
-  completed_items: number;
-  watching_items: number;
-  reading_items: number;
-  total_episodes: number;
-  total_chapters: number;
-  avg_score: number | null;
-  top_genres: string[] | null;
-  top_studios: string[] | null;
-  days_active: number | null;
-}
-
-export type GetRecommendationsResult = MediaCatalogRow[];
-export type GetHorizonsResult = MediaCatalogRow[];
-
-// ═══════════════════════════════════════════════════════════════
-// Database Schema (for Supabase client typing)
-// ═══════════════════════════════════════════════════════════════
-export interface Database {
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
   public: {
     Tables: {
-      profiles: {
-        Row: ProfilesRow;
-        Insert: ProfilesInsert;
-        Update: ProfilesUpdate;
-        Relationships: [];
-      };
-      media_catalog: {
-        Row: MediaCatalogRow;
-        Insert: MediaCatalogInsert;
-        Update: MediaCatalogUpdate;
-        Relationships: [];
-      };
-      user_media_progress: {
-        Row: UserMediaProgressRow;
-        Insert: UserMediaProgressInsert;
-        Update: UserMediaProgressUpdate;
-        Relationships: [
-          { foreignKeyName: 'user_media_progress_user_id_fkey'; columns: ['user_id']; isOneToOne: false; referencedTable: 'profiles'; referencedColumns: ['id'] },
-          { foreignKeyName: 'user_media_progress_media_id_fkey'; columns: ['media_id']; isOneToOne: false; referencedTable: 'media_catalog'; referencedColumns: ['id'] }
-        ];
-      };
-      user_tag_preferences: {
-        Row: UserTagPreferencesRow;
-        Insert: UserTagPreferencesInsert;
-        Update: UserTagPreferencesUpdate;
-        Relationships: [
-          { foreignKeyName: 'user_tag_preferences_user_id_fkey'; columns: ['user_id']; isOneToOne: false; referencedTable: 'profiles'; referencedColumns: ['id'] }
-        ];
-      };
-      media_titles_i18n: {
-        Row: MediaTitlesI18nRow;
-        Insert: MediaTitlesI18nInsert;
-        Update: MediaTitlesI18nInsert;
-        Relationships: [
-          { foreignKeyName: 'media_titles_i18n_media_id_fkey'; columns: ['media_id']; isOneToOne: false; referencedTable: 'media_catalog'; referencedColumns: ['id'] }
-        ];
-      };
       awards: {
-        Row: AwardsRow;
-        Insert: AwardsInsert;
-        Update: AwardsInsert;
+        Row: {
+          award_name: string
+          category: string | null
+          created_at: string
+          id: string
+          is_winner: boolean
+          media_id: string
+          year: number
+        }
+        Insert: {
+          award_name: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_winner: boolean
+          media_id: string
+          year: number
+        }
+        Update: {
+          award_name?: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_winner?: boolean
+          media_id?: string
+          year?: number
+        }
         Relationships: [
-          { foreignKeyName: 'awards_media_id_fkey'; columns: ['media_id']; isOneToOne: false; referencedTable: 'media_catalog'; referencedColumns: ['id'] }
-        ];
-      };
+          {
+            foreignKeyName: "awards_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "media_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       export_logs: {
-        Row: ExportLogsRow;
-        Insert: ExportLogsInsert;
-        Update: ExportLogsInsert;
+        Row: {
+          created_at: string
+          file_size_bytes: number | null
+          format: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_size_bytes?: number | null
+          format: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_size_bytes?: number | null
+          format?: string
+          id?: string
+          user_id?: string
+        }
         Relationships: [
-          { foreignKeyName: 'export_logs_user_id_fkey'; columns: ['user_id']; isOneToOne: false; referencedTable: 'profiles'; referencedColumns: ['id'] }
-        ];
-      };
+          {
+            foreignKeyName: "export_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ingestion_logs: {
-        Row: IngestionLogsRow;
-        Insert: IngestionLogsInsert;
-        Update: IngestionLogsUpdate;
-        Relationships: [];
-      };
+        Row: {
+          completed_at: string | null
+          error_message: string | null
+          id: string
+          records_inserted: number
+          records_processed: number
+          records_updated: number
+          source: string
+          started_at: string
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          error_message?: string | null
+          id?: string
+          records_inserted?: number
+          records_processed?: number
+          records_updated?: number
+          source: string
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          error_message?: string | null
+          id?: string
+          records_inserted?: number
+          records_processed?: number
+          records_updated?: number
+          source?: string
+          started_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      media_catalog: {
+        Row: {
+          age_rating_br: Database["public"]["Enums"]["age_rating_br_enum"]
+          anilist_id: number | null
+          backdrop_url: string | null
+          cover_url: string | null
+          created_at: string
+          duration_minutes: number | null
+          episode_duration_minutes: number | null
+          genres: string[]
+          id: string
+          is_adult: boolean
+          kitsu_id: number | null
+          mal_id: number | null
+          mangadex_id: string | null
+          media_type: Database["public"]["Enums"]["media_type_enum"]
+          openlibrary_id: string | null
+          prestige_badge: Database["public"]["Enums"]["prestige_badge_enum"]
+          release_status: Database["public"]["Enums"]["release_status_enum"]
+          release_year: number | null
+          studios: string[]
+          synopsis: string | null
+          themes: string[]
+          title_default: string
+          title_english: string | null
+          title_native: string | null
+          title_ptbr: string | null
+          title_romaji: string | null
+          tmdb_id: number | null
+          total_chapters: number
+          total_episodes: number
+          total_volumes: number
+          updated_at: string
+          user_score_global: number | null
+        }
+        Insert: {
+          age_rating_br?: Database["public"]["Enums"]["age_rating_br_enum"]
+          anilist_id?: number | null
+          backdrop_url?: string | null
+          cover_url?: string | null
+          created_at?: string
+          duration_minutes?: number | null
+          episode_duration_minutes?: number | null
+          genres?: string[]
+          id?: string
+          is_adult?: boolean
+          kitsu_id?: number | null
+          mal_id?: number | null
+          mangadex_id?: string | null
+          media_type: Database["public"]["Enums"]["media_type_enum"]
+          openlibrary_id?: string | null
+          prestige_badge?: Database["public"]["Enums"]["prestige_badge_enum"]
+          release_status?: Database["public"]["Enums"]["release_status_enum"]
+          release_year?: number | null
+          studios?: string[]
+          synopsis?: string | null
+          themes?: string[]
+          title_default: string
+          title_english?: string | null
+          title_native?: string | null
+          title_ptbr?: string | null
+          title_romaji?: string | null
+          tmdb_id?: number | null
+          total_chapters?: number
+          total_episodes?: number
+          total_volumes?: number
+          updated_at?: string
+          user_score_global?: number | null
+        }
+        Update: {
+          age_rating_br?: Database["public"]["Enums"]["age_rating_br_enum"]
+          anilist_id?: number | null
+          backdrop_url?: string | null
+          cover_url?: string | null
+          created_at?: string
+          duration_minutes?: number | null
+          episode_duration_minutes?: number | null
+          genres?: string[]
+          id?: string
+          is_adult?: boolean
+          kitsu_id?: number | null
+          mal_id?: number | null
+          mangadex_id?: string | null
+          media_type?: Database["public"]["Enums"]["media_type_enum"]
+          openlibrary_id?: string | null
+          prestige_badge?: Database["public"]["Enums"]["prestige_badge_enum"]
+          release_status?: Database["public"]["Enums"]["release_status_enum"]
+          release_year?: number | null
+          studios?: string[]
+          synopsis?: string | null
+          themes?: string[]
+          title_default?: string
+          title_english?: string | null
+          title_native?: string | null
+          title_ptbr?: string | null
+          title_romaji?: string | null
+          tmdb_id?: number | null
+          total_chapters?: number
+          total_episodes?: number
+          total_volumes?: number
+          updated_at?: string
+          user_score_global?: number | null
+        }
+        Relationships: []
+      }
+      media_titles_i18n: {
+        Row: {
+          is_official: boolean
+          language: string
+          media_id: string
+          title: string
+        }
+        Insert: {
+          is_official?: boolean
+          language: string
+          media_id: string
+          title: string
+        }
+        Update: {
+          is_official?: boolean
+          language?: string
+          media_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_titles_i18n_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "media_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       offline_anime_mapping: {
-        Row: OfflineAnimeMappingRow;
-        Insert: OfflineAnimeMappingInsert;
-        Update: OfflineAnimeMappingInsert;
-        Relationships: [];
-      };
-    };
+        Row: {
+          anidb_id: number | null
+          anilist_id: number | null
+          aodb_title: string
+          kitsu_id: number | null
+          mal_id: number | null
+          updated_at: string
+        }
+        Insert: {
+          anidb_id?: number | null
+          anilist_id?: number | null
+          aodb_title: string
+          kitsu_id?: number | null
+          mal_id?: number | null
+          updated_at?: string
+        }
+        Update: {
+          anidb_id?: number | null
+          anilist_id?: number | null
+          aodb_title?: string
+          kitsu_id?: number | null
+          mal_id?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          allow_public_share_links: boolean
+          avatar_url: string | null
+          created_at: string
+          default_view_mode: string
+          display_name: string | null
+          enable_games: boolean
+          enable_nsfw_filter: boolean
+          enable_reading: boolean
+          enable_streaming: boolean
+          id: string
+          is_admin: boolean
+          preferred_language_oriental: string
+          preferred_language_western: string
+          theme: string
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          allow_public_share_links?: boolean
+          avatar_url?: string | null
+          created_at?: string
+          default_view_mode?: string
+          display_name?: string | null
+          enable_games?: boolean
+          enable_nsfw_filter?: boolean
+          enable_reading?: boolean
+          enable_streaming?: boolean
+          id: string
+          is_admin?: boolean
+          preferred_language_oriental?: string
+          preferred_language_western?: string
+          theme?: string
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          allow_public_share_links?: boolean
+          avatar_url?: string | null
+          created_at?: string
+          default_view_mode?: string
+          display_name?: string | null
+          enable_games?: boolean
+          enable_nsfw_filter?: boolean
+          enable_reading?: boolean
+          enable_streaming?: boolean
+          id?: string
+          is_admin?: boolean
+          preferred_language_oriental?: string
+          preferred_language_western?: string
+          theme?: string
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      user_media_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          current_unit: number
+          id: string
+          last_interaction_at: string
+          media_id: string
+          private_insights: string
+          private_spoilers: string
+          rewatch_count: number
+          started_at: string | null
+          status: Database["public"]["Enums"]["user_status_enum"]
+          total_units_at_completion: number | null
+          updated_at: string
+          user_id: string
+          user_score: number | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          current_unit?: number
+          id?: string
+          last_interaction_at?: string
+          media_id: string
+          private_insights?: string
+          private_spoilers?: string
+          rewatch_count?: number
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["user_status_enum"]
+          total_units_at_completion?: number | null
+          updated_at?: string
+          user_id: string
+          user_score?: number | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          current_unit?: number
+          id?: string
+          last_interaction_at?: string
+          media_id?: string
+          private_insights?: string
+          private_spoilers?: string
+          rewatch_count?: number
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["user_status_enum"]
+          total_units_at_completion?: number | null
+          updated_at?: string
+          user_id?: string
+          user_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_media_progress_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "media_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_media_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_tag_preferences: {
+        Row: {
+          score: number
+          tag_name: string
+          tag_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          score?: number
+          tag_name: string
+          tag_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          score?: number
+          tag_name?: string
+          tag_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_tag_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
     Views: {
-      [_ in never]: never;
-    };
+      [_ in never]: never
+    }
     Functions: {
-      get_recommendations: {
-        Args: { p_user_id: string; p_limit?: number };
-        Returns: GetRecommendationsResult;
-      };
       get_horizons: {
-        Args: { p_user_id: string; p_limit?: number };
-        Returns: GetHorizonsResult;
-      };
+        Args: { p_limit?: number; p_user_id: string }
+        Returns: {
+          age_rating_br: Database["public"]["Enums"]["age_rating_br_enum"]
+          anilist_id: number | null
+          backdrop_url: string | null
+          cover_url: string | null
+          created_at: string
+          duration_minutes: number | null
+          episode_duration_minutes: number | null
+          genres: string[]
+          id: string
+          is_adult: boolean
+          kitsu_id: number | null
+          mal_id: number | null
+          mangadex_id: string | null
+          media_type: Database["public"]["Enums"]["media_type_enum"]
+          openlibrary_id: string | null
+          prestige_badge: Database["public"]["Enums"]["prestige_badge_enum"]
+          release_status: Database["public"]["Enums"]["release_status_enum"]
+          release_year: number | null
+          studios: string[]
+          synopsis: string | null
+          themes: string[]
+          title_default: string
+          title_english: string | null
+          title_native: string | null
+          title_ptbr: string | null
+          title_romaji: string | null
+          tmdb_id: number | null
+          total_chapters: number
+          total_episodes: number
+          total_volumes: number
+          updated_at: string
+          user_score_global: number | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "media_catalog"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      get_recommendations: {
+        Args: { p_limit?: number; p_user_id: string }
+        Returns: {
+          age_rating_br: Database["public"]["Enums"]["age_rating_br_enum"]
+          anilist_id: number | null
+          backdrop_url: string | null
+          cover_url: string | null
+          created_at: string
+          duration_minutes: number | null
+          episode_duration_minutes: number | null
+          genres: string[]
+          id: string
+          is_adult: boolean
+          kitsu_id: number | null
+          mal_id: number | null
+          mangadex_id: string | null
+          media_type: Database["public"]["Enums"]["media_type_enum"]
+          openlibrary_id: string | null
+          prestige_badge: Database["public"]["Enums"]["prestige_badge_enum"]
+          release_status: Database["public"]["Enums"]["release_status_enum"]
+          release_year: number | null
+          studios: string[]
+          synopsis: string | null
+          themes: string[]
+          title_default: string
+          title_english: string | null
+          title_native: string | null
+          title_ptbr: string | null
+          title_romaji: string | null
+          tmdb_id: number | null
+          total_chapters: number
+          total_episodes: number
+          total_volumes: number
+          updated_at: string
+          user_score_global: number | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "media_catalog"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_user_stats: {
-        Args: { p_user_id: string };
-        Returns: GetUserStatsResult[];
-      };
-    };
+        Args: { p_user_id: string }
+        Returns: {
+          avg_score: number
+          completed_items: number
+          days_active: number
+          reading_items: number
+          top_genres: string[]
+          top_studios: string[]
+          total_chapters: number
+          total_episodes: number
+          total_items: number
+          watching_items: number
+        }[]
+      }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
+    }
     Enums: {
-      media_type_enum: MediaTypeEnum;
-      user_status_enum: UserStatusEnum;
-      age_rating_br_enum: AgeRatingBrEnum;
-      prestige_badge_enum: PrestigeBadgeEnum;
-      release_status_enum: ReleaseStatusEnum;
-    };
+      age_rating_br_enum: "L" | "10" | "12" | "14" | "16" | "18"
+      media_type_enum:
+        | "movie"
+        | "tv_series"
+        | "anime"
+        | "manga"
+        | "manhwa"
+        | "manhua"
+        | "novel"
+        | "book"
+        | "game"
+      prestige_badge_enum: "none" | "nominee" | "winner"
+      release_status_enum:
+        | "airing"
+        | "finished"
+        | "hiatus"
+        | "cancelled"
+        | "upcoming"
+        | "orphaned"
+      user_status_enum:
+        | "planning"
+        | "watching"
+        | "paused"
+        | "completed"
+        | "dropped"
+        | "rewatching"
+    }
     CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
+      [_ in never]: never
+    }
+  }
 }
 
-// Helper type for Supabase client
-export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row'];
-export type Insert<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Insert'];
-export type Update<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Update'];
-export type Enums<T extends keyof Database['public']['Enums']> = Database['public']['Enums'][T];
-export type Functions<T extends keyof Database['public']['Functions']> = Database['public']['Functions'][T];
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never) = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never) = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      age_rating_br_enum: ["L", "10", "12", "14", "16", "18"],
+      media_type_enum: [
+        "movie",
+        "tv_series",
+        "anime",
+        "manga",
+        "manhwa",
+        "manhua",
+        "novel",
+        "book",
+        "game",
+      ],
+      prestige_badge_enum: ["none", "nominee", "winner"],
+      release_status_enum: [
+        "airing",
+        "finished",
+        "hiatus",
+        "cancelled",
+        "upcoming",
+        "orphaned",
+      ],
+      user_status_enum: [
+        "planning",
+        "watching",
+        "paused",
+        "completed",
+        "dropped",
+        "rewatching",
+      ],
+    },
+  },
+} as const

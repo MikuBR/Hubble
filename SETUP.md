@@ -103,8 +103,8 @@ supabase/migrations/
 ├── 0004_fix_signup_and_test_user.sql
 ├── 0005_fix_validate_progress.sql
 ├── 0006_fix_get_user_stats.sql
-├── 0006_fix_get_user_stats_v2.sql
-├── 0006_fix_get_user_stats_v3.sql
+├── 0007_fix_get_user_stats_v2.sql
+├── 0008_fix_get_user_stats_v3.sql
 ├── 0001_fix_handle_new_user_username.sql
 ├── 0001_enhance_tag_preferences.sql
 └── 0001_avatars_bucket.sql
@@ -130,12 +130,14 @@ curl -X POST \
 
 ## 7. Popule o banco (opcional, mas recomendado)
 
-### 7.1 Ingestão do AODB
+### 7. Popule o banco (opcional, mas recomendado)
+
+#### 7.1 Ingestão do AODB
 
 Gera ~33k mapeamentos anime em `offline_anime_mapping`:
 
 ```bash
-pnpm tsx scripts/ingest-aodb.js
+node scripts/ingest-aodb.js
 ```
 
 > O script baixa o Anime Offline Database (~80MB) e processa via JSONStream.
@@ -145,7 +147,7 @@ pnpm tsx scripts/ingest-aodb.js
 Popula `media_catalog` com metadados reais:
 
 ```bash
-pnpm tsx scripts/enrich-from-anilist.js
+node scripts/enrich-from-anilist.js
 ```
 
 > Respeita rate limit do AniList (~60 req/min). Pode demorar alguns minutos para 1k+ obras.
