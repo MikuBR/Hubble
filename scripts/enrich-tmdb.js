@@ -261,7 +261,7 @@ async function initIngestionLog() {
     logErr(`ingestion_logs insert failed: ${error.message}`)
     return null
   }
-  return data
+  return data.id
 }
 
 async function finishIngestionLog(logId, status, records, inserted, updated, error) {
@@ -312,21 +312,27 @@ async function enrichMedia(type, mediaType) {
     if ((i + 1) % 20 === 0) log(`  detalhado ${i + 1}/${discovered.length}`)
   }
 
-  // Upsert em batches
+  // Upsert em batches — dedupe por tmdb_id dentro do batch para evitar
+  // "ON CONFLICT DO UPDATE command cannot affect row a second time".
   for (let i = 0; i < records.length; i += DEFAULTS.UPSERT_BATCH) {
-    const batch = records.slice(i, i + DEFAULTS.UPSERT_BATCH)
+    const slice = records.slice(i, i + DEFAULTS.UPSERT_BATCH)
+    const seen = new Map()
+    for (const r of slice) {
+      seen.set(r.tmdb_id, r)
+    }
+    const batch = Array.from(seen.values())
     const { data: batchData, error } = await supabase
       .from('media_catalog')
       .upsert(batch, { onConflict: 'tmdb_id' })
 
     if (error) {
-      logErr(`batch ${i / DEFAULTS.UPSERT_BATCH + 1} falhou: ${error.message}`)
+      logErr(`batch ${Math.floor(i / DEFAULTS.UPSERT_BATCH) + 1} falhou: ${error.message}`)
       throw error
     }
     const n = batchData ? batchData.length : batch.length
     upsertCount += n
     inserted += n
-    log(`  💾 ${type} batch ${(i / DEFAULTS.UPSERT_BATCH) + 1}: ${n} registros upsertados`)
+    log(`  💾 ${type} batch ${Math.floor(i / DEFAULTS.UPSERT_BATCH) + 1}: ${n} registros upsertados`)
   }
 
   log(`✅ ${type === 'movie' ? 'Filmes' : 'Séries'} concluídos — ${records.length} registros processados`)

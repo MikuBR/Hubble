@@ -1,0 +1,8 @@
+[project]
+project_id = "cmthcjlmdffsjtofolvh"
+
+[db]
+schema = "public"
+
+[manifest]
+create_migrations = false

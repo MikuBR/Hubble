@@ -510,7 +510,7 @@ async function openIngestionLog(sb) {
     console.warn('⚠️  ingestion_logs indisponível (%s) — seguindo sem auditoria', error.message.slice(0, 120));
     return null;
   }
-  return data;
+  return data.id;
 }
 
 async function closeIngestionLog(sb, logId, status, processed, inserted, updated, errorMsg) {
